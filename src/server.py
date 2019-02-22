@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 from dotenv import load_dotenv
 load_dotenv()
@@ -52,8 +53,8 @@ def send_message_im(message, app_channel):
 
 def validate_order(order):
   formatted_order = order.strip().lower()
-  re = r"(army|fleet)\s[a-z]{3}\sholds(army|fleet)\s[a-z]{3}\sholds"
-  return re.match(formatted_order) != None
+  order_regex = r"(army|fleet)\s[a-z]{3}\sholds(army|fleet)\s[a-z]{3}\sholds"
+  return re.match(order_regex, formatted_order) != None
 
 if __name__ == '__main__':
   app.run('0.0.0.0')
