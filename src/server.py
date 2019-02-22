@@ -21,7 +21,7 @@ def returnRequestChallenge():
   if event["type"] == 'app_mention':
     send_message_channel("hi everyone")
   elif event["type"] == 'message':
-    send_message_im("hi you", event['user'])
+    send_message_im("hi you", event['channel'])
   return "OK"
 
 def send_message_channel(message):
@@ -35,7 +35,7 @@ def send_message_channel(message):
 
   requests.post(SLACK_URL, data=body, headers=headers)
 
-def send_message_im(message, user):
+def send_message_im(message, app_channel):
   headers = {
     "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
   }
