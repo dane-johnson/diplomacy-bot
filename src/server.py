@@ -17,6 +17,7 @@ def returnRequestChallenge():
   print params
   if 'challenge' in params:
     return request.get_json()['challenge']
+  print params["type"]
   if params["type"] == 'app_mention':
     send_message_channel("hi everyone")
   elif params["type"] == 'message':
