@@ -15,6 +15,7 @@ def returnRequestChallenge():
   print params
   if 'challenge' in params:
     return request.get_json()['challenge']
+  send_message("hi there")
   return "OK"
 
 def send_message(message):
@@ -22,8 +23,8 @@ def send_message(message):
     "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
   }
   body = {
-    "text": "Hi there",
-    "channel": "#diplomacy",
+    "text": message,
+    "channel": "#diplomacy"
   }
 
   requests.post(SLACK_URL, data=body, headers=header)
