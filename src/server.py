@@ -1,5 +1,7 @@
 import os
 import requests
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, request
 app = Flask(__name__)
 
@@ -27,7 +29,7 @@ def send_message(message):
     "channel": "#diplomacy"
   }
 
-  requests.post(SLACK_URL, data=body, headers=header)
+  requests.post(SLACK_URL, data=body, headers=headers)
 
 if __name__ == '__main__':
   app.run('0.0.0.0', port=80)
