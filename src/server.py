@@ -53,7 +53,7 @@ def send_message_im(message, app_channel):
 
 def validate_order(order):
   formatted_order = order.strip().lower()
-  order_regex = r"(army|fleet)\s[a-z]{3}\sholds(army|fleet)\s[a-z]{3}\sholds"
+  order_regex = r"(army|fleet)\s[a-z]{3}\sholds"
   return re.match(order_regex, formatted_order) != None
 
 if __name__ == '__main__':
