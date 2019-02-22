@@ -20,7 +20,8 @@ def returnRequestChallenge():
   event = params["event"]
   if event["type"] == 'app_mention':
     send_message_channel("hi everyone")
-  elif event["type"] == 'message':
+  elif event["type"] == 'message' and \
+       not ("subtype" in event and event["subtype"] == "bot_message"):
     send_message_im("hi you", event['channel'])
   return "OK"
 
@@ -41,10 +42,10 @@ def send_message_im(message, app_channel):
   }
   body = {
     "text": message,
-    "channel": user,
+    "channel": app_channel,
   }
 
   requests.post(SLACK_URL, data=body, headers=headers)
 
 if __name__ == '__main__':
-  app.run('0.0.0.0', port=80)
+  app.run('0.0.0.0')
