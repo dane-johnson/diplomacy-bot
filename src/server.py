@@ -22,7 +22,10 @@ def returnRequestChallenge():
     send_message_channel("hi everyone")
   elif event["type"] == 'message' and \
        not ("subtype" in event and event["subtype"] == "bot_message"):
-    send_message_im("hi you", event['channel'])
+    if validate_order(event['text']):
+      send_message_im("Order Recieved!", event["channel"])
+    else:
+      send_message_im("I don't know what you mean!", event["channel"])
   return "OK"
 
 def send_message_channel(message):
@@ -46,6 +49,11 @@ def send_message_im(message, app_channel):
   }
 
   requests.post(SLACK_URL, data=body, headers=headers)
+
+def validate_order(order):
+  formatted_order = order.strip().lower()
+  re = r"(army|fleet)\s[a-z]{3}\sholds(army|fleet)\s[a-z]{3}\sholds"
+  return re.match(formatted_order) != None
 
 if __name__ == '__main__':
   app.run('0.0.0.0')
