@@ -17,16 +17,30 @@ def returnRequestChallenge():
   print params
   if 'challenge' in params:
     return request.get_json()['challenge']
-  send_message("hi there")
+  if params["type"] == 'app_mention':
+    send_message_channel("hi everyone")
+  elif params["type"] == 'message':
+    send_message_im("hi you", params['user'])
   return "OK"
 
-def send_message(message):
+def send_message_channel(message):
   headers = {
     "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
   }
   body = {
     "text": message,
     "channel": "#diplomacy"
+  }
+
+  requests.post(SLACK_URL, data=body, headers=headers)
+
+def send_message_im(message, user):
+  headers = {
+    "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
+  }
+  body = {
+    "text": message,
+    "channel": user,
   }
 
   requests.post(SLACK_URL, data=body, headers=headers)
