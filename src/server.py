@@ -17,11 +17,11 @@ def returnRequestChallenge():
   print params
   if 'challenge' in params:
     return request.get_json()['challenge']
-  print params["type"]
-  if params["type"] == 'app_mention':
+  event = params["event"]
+  if event["type"] == 'app_mention':
     send_message_channel("hi everyone")
-  elif params["type"] == 'message':
-    send_message_im("hi you", params['user'])
+  elif event["type"] == 'message':
+    send_message_im("hi you", event['user'])
   return "OK"
 
 def send_message_channel(message):
