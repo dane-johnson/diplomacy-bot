@@ -8,6 +8,16 @@ app = Flask(__name__)
 
 SLACK_URL = "https://slack.com/api/chat.postMessage"
 
+FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
+MODES = frozenset(["pregame", "ingame"])
+
+gamestate = {
+  "players": {},
+  "units": {},
+  "orders": [],
+  "mode": "pregame"
+}
+
 @app.route("/")
 def hello():
   return "Hello World"
@@ -20,7 +30,7 @@ def returnRequestChallenge():
     return request.get_json()['challenge']
   event = params["event"]
   if event["type"] == 'app_mention':
-    send_message_channel("hi everyone")
+    handle_in_channel_message(event)
   elif event["type"] == 'message' and \
        not ("subtype" in event and event["subtype"] == "bot_message"):
     if validate_order(event['text']):
@@ -55,6 +65,20 @@ def validate_order(order):
   formatted_order = order.strip().lower()
   order_regex = r"(army|fleet)\s[a-z]{3}\sholds"
   return re.match(order_regex, formatted_order) != None
+
+def handle_in_channel_message(event):
+  register_regex = r"register ([-a-z]+)"
+  register_groups = re.match(register_regex, event['text'].lower())
+  if register_groups:
+    if gamestate['mode'] != 'pregame': ## Sanity check
+      send_message_channel("Cannot register while the game is on!")
+      return
+    faction = register_groups.group(1)
+    if not faction in FACTIONS:
+      send_message_channel("%s is not a valid faction" % faction)
+    else:
+      user = event['user']
+      send_message_channel("<@%s> you are registered to faction %s" % (user, faction))
 
 if __name__ == '__main__':
   app.run('0.0.0.0')
