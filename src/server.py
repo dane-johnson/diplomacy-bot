@@ -18,12 +18,8 @@ gamestate = {
   "mode": "pregame"
 }
 
-@app.route("/")
-def hello():
-  return "Hello World"
-
 @app.route("/event", methods=['POST'])
-def returnRequestChallenge():
+def return_request_challenge():
   params = request.get_json()
   print params
   if 'challenge' in params:
@@ -78,7 +74,49 @@ def handle_in_channel_message(event):
       send_message_channel("%s is not a valid faction" % faction)
     else:
       user = event['user']
+      add_to_faction(faction, user)
       send_message_channel("<@%s> you are registered to faction %s" % (user, faction))
 
+  display_regex = r"display (factions)"
+  display_groups = re.search(display_regex, event['text'].lower())
+  if display_groups:
+    item = display_groups.group(1)
+    if item == 'factions':
+      faction_string = print_factions()
+      send_message_channel(faction_string)
+
+def print_factions():
+  string = ""
+  for faction in FACTIONS:
+    string += "%s: " % faction
+    for player in gamestate['players'][faction]:
+      string += "<@%s>, " % player
+    string += "\n"
+  return string
+      
+
+def get_all_players():
+  return reduce(lambda x, y: x | y, gamestate['players'].values())
+
+def get_team(player):
+  for team in teams:
+    if player in team:
+      return team
+
+def add_to_faction(faction, user):
+  global gamestate
+  if user in get_all_players():
+    ## the player wants to switch teams
+    current_faction = get_team(user)
+    gamestate['players'][current_faction].remove(player)
+  gamestate['players'][faction].add(user)
+
+def init_gamestate():
+  ## Add all factions with empty team names
+  global gamestate
+  for faction in FACTIONS:
+    gamestate["players"][faction] = set([])
+
 if __name__ == '__main__':
+  init_gamestate()
   app.run('0.0.0.0')
