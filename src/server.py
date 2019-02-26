@@ -1,4 +1,6 @@
 import os
+import sys
+import pickle
 import re
 import requests
 from dotenv import load_dotenv
@@ -17,6 +19,8 @@ gamestate = {
   "orders": [],
   "mode": "pregame"
 }
+
+filename = None
 
 @app.route("/event", methods=['POST'])
 def return_request_challenge():
@@ -93,6 +97,9 @@ def handle_in_channel_message(event):
   if start_groups:
     start_game()
 
+  if filename:
+    save_gamestate()
+
 def print_factions():
   string = ""
   for faction in FACTIONS:
@@ -130,6 +137,17 @@ def start_game():
       gamestate['mode'] == 'active'
       send_message_channel("@here game on!!!")
 
+def restore_gamestate():
+  global gamestate
+  file = open(filename, 'r')
+  gamestate = pickle.load(file)
+  file.close()
+
+def save_gamestate():
+  file = open(filename, 'w')
+  pickle.dump(gamestate, file)
+  file.close()
+
 def init_gamestate():
   ## Add all factions with empty team names
   global gamestate
@@ -137,5 +155,13 @@ def init_gamestate():
     gamestate["players"][faction] = set([])
 
 if __name__ == '__main__':
-  init_gamestate()
+  if len(sys.argv) == 2:
+    filename = sys.argv[1]
+    if os.path.isfile(filename):
+      restore_gamestate()
+    else:
+      init_gamestate()
+      save_gamestate()
+  else:
+    init_gamestate()
   app.run('0.0.0.0')
