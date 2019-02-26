@@ -43,6 +43,11 @@ def return_request_challenge():
   return "OK"
 
 def send_message_channel(message):
+  ## Sick of having to check slack, allow an environment variable to print to screen
+  if os.environ["DIPLOMACY_DEMO"]:
+    print 'CHANNEL-MESSAGE:%s' % message
+    return
+  
   headers = {
     "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
   }
@@ -54,6 +59,11 @@ def send_message_channel(message):
   requests.post(SLACK_URL, data=body, headers=headers)
 
 def send_message_im(message, app_channel):
+    ## Sick of having to check slack, allow an environment variable to print to screen
+  if os.environ["DIPLOMACY_DEMO"]:
+    print 'IM-%s:%s' % (app_channel, message)
+    return
+
   headers = {
     "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
   }
