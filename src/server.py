@@ -16,7 +16,7 @@ MODES = frozenset(["pregame", "ingame"])
 gamestate = {
   "players": {},
   "units": {},
-  "orders": [],
+  "orders": {},
   "mode": "active"
 }
 
@@ -37,7 +37,8 @@ def return_request_challenge():
     if order:
       if gamestate['mode'] == 'active':
         send_message_im("Order Recieved!", event["channel"])
-        print order 
+        add_order(order)
+        save_gamestate()
       else:
         send_message_im("Wait to send orders until the game is started!", event['channel'])
     else:
@@ -102,6 +103,12 @@ def parse_order(order):
   convoy_groups = re.match(convoy_regex, order)
   if convoy_groups:
     return {'action': 'convoy', 'territory': convoy_groups.group(1), 'from': convoy_groups.group(2), 'to': convoy_groups.group(3)}
+
+def add_order(order):
+  ## Find and remove any existing orders for this unit
+  if order['territory'] in gamestate['orders']:
+    del gamestate['orders'][order['territory']]
+  gamestate['orders'][order['territory']] = order
 
 def handle_in_channel_message(event):
   register_regex = r"register ([-a-z]+)"
