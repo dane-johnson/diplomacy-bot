@@ -17,7 +17,7 @@ gamestate = {
   "players": {},
   "units": {},
   "orders": [],
-  "mode": "pregame"
+  "mode": "active"
 }
 
 filename = None
@@ -33,9 +33,11 @@ def return_request_challenge():
     handle_in_channel_message(event)
   elif event["type"] == 'message' and \
        not ("subtype" in event and event["subtype"] == "bot_message"):
-    if validate_order(event['text']):
+    order = parse_order(event['text'])
+    if order:
       if gamestate['mode'] == 'active':
         send_message_im("Order Recieved!", event["channel"])
+        print order 
       else:
         send_message_im("Wait to send orders until the game is started!", event['channel'])
     else:
@@ -74,10 +76,32 @@ def send_message_im(message, app_channel):
 
   requests.post(SLACK_URL, data=body, headers=headers)
 
-def validate_order(order):
+def parse_order(order):
   formatted_order = order.strip().lower()
-  order_regex = r"(army|fleet)\s[a-z]{3}\sholds"
-  return re.search(order_regex, formatted_order) != None
+  
+  hold_regex = r"(?:army|fleet)\s([a-z]{3})\sholds"
+  hold_groups = re.match(hold_regex, order)
+  if hold_groups:
+    return {'action': 'hold', 'territory': hold_groups.group(1)}
+
+  move_attack_regex = r"(?:army|fleet)\s([a-z]{3})\sto\s([a-z]{3})"
+  move_attack_groups = re.match(move_attack_regex, order)
+  if move_attack_groups:
+    return {'action': 'move/attack', 'territory': move_attack_groups.group(1), 'to': move_attack_groups.group(2)}
+
+  support_regex = r"(?:army|fleet)\s([a-z]{3})\ssupports\s(?:army|fleet)\s([a-z]{3})(?:\sto\s)?([a-z]{3})?"
+  support_groups = re.match(support_regex, order)
+  if support_groups:
+    order = {'action': 'support', 'territory': support_groups.group(1), 'supporting': support_groups.group(2)}
+    print support_groups.group(3)
+    if support_groups.groups(3):
+      order['to'] = support_groups.group(3)
+    return order
+
+  convoy_regex = r"(?:fleet)\s([a-z]{3})\sconvoys\s(?:army)\s([a-z]{3})\sto\s([a-z]{3})"
+  convoy_groups = re.match(convoy_regex, order)
+  if convoy_groups:
+    return {'action': 'convoy', 'territory': convoy_groups.group(1), 'from': convoy_groups.group(2), 'to': convoy_groups.group(3)}
 
 def handle_in_channel_message(event):
   register_regex = r"register ([-a-z]+)"
