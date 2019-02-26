@@ -30,7 +30,10 @@ def return_request_challenge():
   elif event["type"] == 'message' and \
        not ("subtype" in event and event["subtype"] == "bot_message"):
     if validate_order(event['text']):
-      send_message_im("Order Recieved!", event["channel"])
+      if gamestate['mode'] == 'active':
+        send_message_im("Order Recieved!", event["channel"])
+      else:
+        send_message_im("Wait to send orders until the game is started!", event['channel'])
     else:
       send_message_im("I don't know what you mean!", event["channel"])
   return "OK"
