@@ -85,6 +85,11 @@ def handle_in_channel_message(event):
       faction_string = print_factions()
       send_message_channel(faction_string)
 
+  start_regex = r"start"
+  start_groups = re.search(start_regex, event['text'].lower())
+  if start_groups:
+    start_game()
+
 def print_factions():
   string = ""
   for faction in FACTIONS:
@@ -93,23 +98,34 @@ def print_factions():
       string += "<@%s>, " % player
     string += "\n"
   return string
-      
 
 def get_all_players():
   return reduce(lambda x, y: x | y, gamestate['players'].values())
 
-def get_team(player):
-  for team in teams:
-    if player in team:
-      return team
+def get_faction(player):
+  for faction in FACTIONS:
+    if player in gamestate['players'][faction]:
+      return faction
 
-def add_to_faction(faction, user):
+def add_to_faction(faction, player):
   global gamestate
-  if user in get_all_players():
+  if player in get_all_players():
     ## the player wants to switch teams
-    current_faction = get_team(user)
+    current_faction = get_faction(player)
     gamestate['players'][current_faction].remove(player)
-  gamestate['players'][faction].add(user)
+  gamestate['players'][faction].add(player)
+
+def start_game():
+  global gamestate
+  if gamestate['mode'] != 'pregame':
+    send_message_channel("Game is already on!")
+  else:
+    empty_factions = filter(lambda x: len(gamestate['players'][x]) == 0, FACTIONS)
+    if len(empty_factions) > 0:
+      send_message_channel("These factions have no members: %s" % ", ".join(empty_factions))
+    else:
+      gamestate['mode'] == 'active'
+      send_message_channel("@here game on!!!")
 
 def init_gamestate():
   ## Add all factions with empty team names
