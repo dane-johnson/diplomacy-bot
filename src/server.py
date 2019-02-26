@@ -64,11 +64,11 @@ def send_message_im(message, app_channel):
 def validate_order(order):
   formatted_order = order.strip().lower()
   order_regex = r"(army|fleet)\s[a-z]{3}\sholds"
-  return re.match(order_regex, formatted_order) != None
+  return re.search(order_regex, formatted_order) != None
 
 def handle_in_channel_message(event):
   register_regex = r"register ([-a-z]+)"
-  register_groups = re.match(register_regex, event['text'].lower())
+  register_groups = re.search(register_regex, event['text'].lower())
   if register_groups:
     if gamestate['mode'] != 'pregame': ## Sanity check
       send_message_channel("Cannot register while the game is on!")
