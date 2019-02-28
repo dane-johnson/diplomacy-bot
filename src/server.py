@@ -38,7 +38,8 @@ def return_request_challenge():
       if gamestate['mode'] == 'active':
         send_message_im("Order Recieved!", event["channel"])
         add_order(order)
-        save_gamestate()
+        if filename:
+          save_gamestate()
       else:
         send_message_im("Wait to send orders until the game is started!", event['channel'])
     else:
