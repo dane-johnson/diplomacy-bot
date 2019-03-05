@@ -23,6 +23,7 @@ gameboard = {
   'swe': {'type': 'coastal', 'supply': 'neutral', 'borders': ['nwy', 'fin', 'bot', 'bal', 'den', 'ska']},
   'fin': {'type': 'coastal', 'supply': 'none', 'borders': ['nwy', 'stp', 'bot', 'swe']},
   'bot': {'type': 'water', 'borders': ['swe', 'fin', 'stp', 'lvn', 'bal']},
+  'bal': {'type': 'water', 'borders': ['bot', 'lvn', 'pru', 'ber', 'kie', 'hel', 'den', 'ska', 'swe']},
   'lvn': {'type': 'coastal', 'supply': 'none', 'borders': ['bot', 'stp', 'mos', 'war', 'pru', 'bal']},
   'ukr': {'type': 'land', 'supply': 'none', 'borders': ['mos', 'sev', 'rum', 'gal', 'war']},
   'bla': {'type': 'water', 'borders': ['sev', 'arm', 'ank', 'con', 'bul', 'aeg', 'bul', 'rum']},
@@ -30,7 +31,8 @@ gameboard = {
   'smy': {'type': 'coastal', 'supply': 'turkey', 'borders': ['ank', 'arm', 'syr', 'eas', 'aeg', 'con']},
   'aeg': {'type': 'water', 'borders': ['bul', 'con', 'bla', 'smy', 'eas', 'ion', 'gre']},
   'gre': {'type': 'coastal', 'supply': 'neutral', 'borders': ['ser', 'bul', 'aeg', 'ion', 'alb']},
-  'nap': {'type': 'coastal', 'supply': 'italy', 'borders': ['apu', 'ion', 'tys', 'rom', 'ven']},
+  'apu': {'type': 'coastal', 'supply': 'none', 'borders': ['adr', 'ion', 'nap', 'rom', 'ven']},
+  'nap': {'type': 'coastal', 'supply': 'italy', 'borders': ['apu', 'ion', 'tys', 'rom']},
   'tys': {'type': 'water', 'borders': ['lyo', 'tus', 'rom', 'nap' , 'ion', 'tun', 'wes']},
   'wes': {'type': 'water', 'borders': ['lyo', 'tys', 'tun', 'naf', 'mao', 'spa']},
   'spa': {'type': 'coastal', 'supply': 'neutral', 'borders': ['mao', 'gas', 'mar', 'lyo', 'wes', 'por']},
@@ -54,7 +56,7 @@ gameboard = {
   'lyo': {'type': 'water', 'borders': ['mar', 'pie', 'tus', 'tys', 'wes', 'spa']},
   'mar': {'type': 'coastal', 'supply': 'france', 'borders': ['bur', 'pie', 'lyo', 'spa', 'gas']},
   'bur': {'type': 'land', 'supply': 'none', 'borders': ['bel', 'ruh', 'mun', 'mar', 'gas', 'par', 'pic']},
-  'par': {'type': 'water', 'supply': 'france', 'borders': ['pic', 'bur', 'gas', 'bre']},
+  'par': {'type': 'land', 'supply': 'france', 'borders': ['pic', 'bur', 'gas', 'bre']},
   'pic': {'type': 'coastal', 'supply': 'none', 'borders': ['bel', 'bur', 'par', 'bre', 'eng']},
   'bel': {'type': 'coastal', 'supply': 'neutral', 'borders': ['nth', 'hol', 'ruh', 'bur', 'pic', 'eng']},
   'lon': {'type': 'coastal', 'supply': 'england', 'borders': ['yor', 'nth', 'eng', 'wal']},
@@ -63,6 +65,19 @@ gameboard = {
   'den': {'type': 'coastal', 'supply': 'neutral', 'borders': ['ska', 'swe', 'kie', 'bal', 'hel', 'nth']},
   'ska': {'type': 'water', 'borders': ['nwy', 'swe', 'den', 'bal', 'nth']},
   'ber': {'type': 'coastal', 'supply': 'germany', 'borders': ['bal', 'pru', 'sil', 'mun', 'kie']},
+  'sil': {'type': 'land', 'supply': 'none', 'borders': ['pru', 'war', 'gal', 'boh', 'mun', 'ber']},
+  'bud': {'type': 'land', 'supply': 'austria-hungary', 'borders': ['gal', 'rum', 'ser', 'tri', 'vie']},
+  'tri': {'type': 'coastal', 'supply': 'austria-hungary', 'borders': ['vie', 'bud', 'ser', 'alb', 'adr', 'ven', 'tyr']},
+  'ven': {'type': 'coastal', 'supply': 'italy', 'borders': ['tyr', 'tri', 'adr', 'apu', 'rom', 'tus', 'pie']},
+  'tus': {'type': 'coastal', 'supply': 'none', 'borders': ['ven', 'rom', 'tys', 'lyo', 'pie']},
+  'pie': {'type': 'coastal', 'supply': 'none', 'borders': ['tyr', 'ven', 'tus', 'lyo', 'mar']},
+  'mun': {'type': 'land', 'supply': 'germany', 'borders': ['ber', 'sil', 'boh', 'tyr', 'bur', 'ruh', 'kie']},
+  'ruh': {'type': 'land', 'supply': 'none', 'borders': ['kie', 'mun', 'bur', 'bel', 'hol']},
+  'kie': {'type': 'coastal', 'supply': 'germany', 'borders': ['den', 'bal', 'ber', 'mun', 'ruh', 'hol', 'hel']},
+  'boh': {'type': 'land', 'supply': 'none', 'borders': ['sil', 'gal', 'vie', 'tyr', 'mun']},
+  'vie': {'type': 'land', 'supply': 'austria-hungary', 'borders': ['gal', 'bud', 'tri', 'tyr', 'boh']},
+  'tyr': {'type': 'land', 'supply': 'none', 'borders': ['boh', 'vie', 'tri', 'ven', 'pie', 'mun']},
+  
 }
 
 def print_board_issues():
@@ -82,8 +97,9 @@ def print_board_issues():
         print "%s borders %s but %s isn't on the gameboard" % (territory, border, border)
       elif territory not in frozenset(gameboard[border]['borders']):
         print "%s borders %s but %s does not border %s" % (territory, border, border, territory)
-  if len(filter(lambda x: gameboard[x]['type'] != 'water' and gameboard[x]['supply'] != 'none', gameboard)) != 34:
-    print 'There are not the correct amount of supply centers'
+  supply_centers = filter(lambda x: gameboard[x]['type'] != 'water' and gameboard[x]['supply'] != 'none', gameboard)
+  if len(supply_centers) != 34:
+    print 'There are not the correct amount of supply centers (%d/34)' % len(supply_centers)
 
 if __name__ == "__main__":
   print_board_issues()
