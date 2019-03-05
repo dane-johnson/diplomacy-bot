@@ -20,7 +20,7 @@ gameboard = {
   'edi': {'type': 'coastal', 'supply': 'england', 'borders': ['nwg', 'nth', 'yor', 'lvp', 'cly']},
   'nth': {'type': 'water', 'borders': ['nwg', 'nwy', 'ska', 'den', 'hel', 'hol', 'bel', 'eng', 'lon', 'yor', 'edi']},
   'nwy': {'type': 'coastal', 'supply': 'neutral', 'borders': ['nwg', 'bar', 'stp', 'fin', 'swe', 'ska', 'nth']},
-  'swe': {'type': 'coastal', 'supply': 'neutral', 'borders': ['nwy', 'fin', 'bot', 'bal', 'ska']},
+  'swe': {'type': 'coastal', 'supply': 'neutral', 'borders': ['nwy', 'fin', 'bot', 'bal', 'den', 'ska']},
   'fin': {'type': 'coastal', 'supply': 'none', 'borders': ['nwy', 'stp', 'bot', 'swe']},
   'bot': {'type': 'water', 'borders': ['swe', 'fin', 'stp', 'lvn', 'bal']},
   'lvn': {'type': 'coastal', 'supply': 'none', 'borders': ['bot', 'stp', 'mos', 'war', 'pru', 'bal']},
@@ -49,7 +49,20 @@ gameboard = {
   'bul': {'type': 'coastal', 'supply': 'neutral', 'borders': ['rum', 'bla', 'con', 'aeg', 'gre', 'ser']},
   'ser': {'type': 'land', 'supply': 'neutral', 'borders': ['bud', 'rum', 'bul', 'gre', 'alb', 'tri']},
   'alb': {'type': 'coastal', 'supply': 'none', 'borders': ['ser', 'gre', 'ion', 'adr', 'tri']},
-  'adr': {'type': 'water', 'borders': ['tri', 'alb', 'ion', 'apu', 'ven']}
+  'adr': {'type': 'water', 'borders': ['tri', 'alb', 'ion', 'apu', 'ven']},
+  'rom': {'type': 'coastal', 'supply': 'italy', 'borders': ['tus', 'ven', 'apu', 'nap', 'tys']},
+  'lyo': {'type': 'water', 'borders': ['mar', 'pie', 'tus', 'tys', 'wes', 'spa']},
+  'mar': {'type': 'coastal', 'supply': 'france', 'borders': ['bur', 'pie', 'lyo', 'spa', 'gas']},
+  'bur': {'type': 'land', 'supply': 'none', 'borders': ['bel', 'ruh', 'mun', 'mar', 'gas', 'par', 'pic']},
+  'par': {'type': 'water', 'supply': 'france', 'borders': ['pic', 'bur', 'gas', 'bre']},
+  'pic': {'type': 'coastal', 'supply': 'none', 'borders': ['bel', 'bur', 'par', 'bre', 'eng']},
+  'bel': {'type': 'coastal', 'supply': 'neutral', 'borders': ['nth', 'hol', 'ruh', 'bur', 'pic', 'eng']},
+  'lon': {'type': 'coastal', 'supply': 'england', 'borders': ['yor', 'nth', 'eng', 'wal']},
+  'hol': {'type': 'coastal', 'supply': 'neutral', 'borders': ['hel', 'kie', 'ruh', 'bel', 'nth']},
+  'hel': {'type': 'water', 'borders': ['nth', 'den', 'bal', 'kie', 'hol']},
+  'den': {'type': 'coastal', 'supply': 'neutral', 'borders': ['ska', 'swe', 'kie', 'bal', 'hel', 'nth']},
+  'ska': {'type': 'water', 'borders': ['nwy', 'swe', 'den', 'bal', 'nth']},
+  'ber': {'type': 'coastal', 'supply': 'germany', 'borders': ['bal', 'pru', 'sil', 'mun', 'kie']},
 }
 
 def print_board_issues():
