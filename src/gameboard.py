@@ -77,7 +77,31 @@ gameboard = {
   'boh': {'type': 'land', 'supply': 'none', 'borders': ['sil', 'gal', 'vie', 'tyr', 'mun']},
   'vie': {'type': 'land', 'supply': 'austria-hungary', 'borders': ['gal', 'bud', 'tri', 'tyr', 'boh']},
   'tyr': {'type': 'land', 'supply': 'none', 'borders': ['boh', 'vie', 'tri', 'ven', 'pie', 'mun']},
-  
+}
+
+starting_positions = {
+  'vie': 'austria-hungary army',
+  'bud': 'austria-hungary army',
+  'tri': 'austria-hungary fleet',
+  'lon': 'england fleet',
+  'edi': 'england fleet',
+  'liv': 'england army',
+  'par': 'france army',
+  'mar': 'france army',
+  'bre': 'france fleet',
+  'ber': 'germany army',
+  'mun': 'germany army',
+  'kie': 'germany fleet',
+  'rom': 'italy army',
+  'ven': 'italy army',
+  'nap': 'italy fleet',
+  'mos': 'russia army',
+  'sev': 'russia fleet',
+  'war': 'russia army',
+  'stp': 'russia fleet',
+  'ank': 'turkey fleet',
+  'con': 'turkey army',
+  'smy': 'turkey army'
 }
 
 def print_board_issues():
