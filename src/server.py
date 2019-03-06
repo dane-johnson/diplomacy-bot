@@ -8,6 +8,8 @@ load_dotenv()
 from flask import Flask, request
 app = Flask(__name__)
 
+from gameboard import gameboard, starting_positions
+
 SLACK_URL = "https://slack.com/api/chat.postMessage"
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
@@ -17,7 +19,8 @@ gamestate = {
   "players": {},
   "units": {},
   "orders": {},
-  "mode": "active"
+  "mode": "active",
+  "gameboard": gameboard
 }
 
 filename = None
@@ -36,10 +39,14 @@ def return_request_challenge():
     order = parse_order(event['text'])
     if order:
       if gamestate['mode'] == 'active':
-        send_message_im("Order Recieved!", event["channel"])
-        add_order(order)
-        if filename:
-          save_gamestate()
+        error = order_error(order, event['user'])
+        if not error:
+          send_message_im("Order Recieved!", event["channel"])
+          add_order(order)
+          if filename:
+            save_gamestate()
+        else:
+          send_message_im(error, event["channel"])
       else:
         send_message_im("Wait to send orders until the game is started!", event['channel'])
     else:
@@ -111,6 +118,22 @@ def add_order(order):
     del gamestate['orders'][order['territory']]
   gamestate['orders'][order['territory']] = order
 
+def order_error(order, user):
+  territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'support'])
+  for territory in territories_in_order:
+    ## Make sure territory/to/from/supports is on the board
+    if territory and territory not in gamestate['gameboard']:
+      return "Territory %s is not valid" % territory
+  ## Make sure the user can control this army/navy
+  if gamestate['gameboard'][order['territory']]['piece'].split()[0] != get_faction(user):
+    return "%s does not control %s" % (get_faction(user), order['territory'])
+  ## Make sure to/from/supporting are neighbors
+  territories_in_order = map(lambda x: order.get(x, None), ['to', 'from', 'support'])
+  for territory in territories_in_order:
+    if territory and territory not in gamestate['gameboard'][order['territory']]['borders']:
+      return "%s does not border %s" % (territory, order['territory'])
+  return None
+
 def handle_in_channel_message(event):
   register_regex = r"register ([-a-z]+)"
   register_groups = re.search(register_regex, event['text'].lower())
@@ -126,13 +149,18 @@ def handle_in_channel_message(event):
       add_to_faction(faction, user)
       send_message_channel("<@%s> you are registered to faction %s" % (user, faction))
 
-  display_regex = r"display (factions)"
+  display_regex = r"display (.*)"
   display_groups = re.search(display_regex, event['text'].lower())
   if display_groups:
     item = display_groups.group(1)
     if item == 'factions':
       faction_string = print_factions()
       send_message_channel(faction_string)
+    elif item == 'board':
+      board_string = print_board()
+      send_message_channel(board_string)
+    else:
+      send_message_channel("I don't know what %s is." % item)
 
   start_regex = r"start"
   start_groups = re.search(start_regex, event['text'].lower())
@@ -149,6 +177,13 @@ def print_factions():
     for player in gamestate['players'][faction]:
       string += "<@%s>, " % player
     string += "\n"
+  return string
+
+def print_board():
+  string = ""
+  for space in gamestate['gameboard']:
+    if gamestate['gameboard'][space]['piece'] != 'none':
+      string += "%s: %s\n" % (space, gamestate['gameboard'][space]['piece'])
   return string
 
 def get_all_players():
@@ -195,6 +230,16 @@ def init_gamestate():
   global gamestate
   for faction in FACTIONS:
     gamestate["players"][faction] = set([])
+  for space in gamestate['gameboard']:
+    if 'supply' in gamestate['gameboard'][space] and gamestate['gameboard'][space]['supply'] != 'none':
+      if gamestate['gameboard'][space]['supply'] == 'neutral':
+        gamestate['gameboard'][space]['controller'] = 'none'
+      else:
+        gamestate['gameboard'][space]['controller'] = gamestate['gameboard'][space]['supply']
+    gamestate['gameboard'][space]['piece'] = 'none'
+    gamestate['gameboard'][space]['borders'] = frozenset(gamestate['gameboard'][space]['borders'])
+  for pos in starting_positions:
+    gamestate['gameboard'][pos]['piece'] = starting_positions[pos]
 
 if __name__ == '__main__':
   if len(sys.argv) == 2:
