@@ -85,7 +85,7 @@ starting_positions = {
   'tri': 'austria-hungary fleet',
   'lon': 'england fleet',
   'edi': 'england fleet',
-  'liv': 'england army',
+  'lvp': 'england army',
   'par': 'france army',
   'mar': 'france army',
   'bre': 'france fleet',
