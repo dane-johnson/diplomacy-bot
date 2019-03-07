@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+from Tkinter import *
+import requests
+import sys
+import json
+
+factions = ["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"]
+
+def main():
+  if (len(sys.argv) < 2):
+    print "usage %s <url>" % sys.argv[0]
+    exit(1)
+  root = Tk()
+  if sys.platform.startswith('linux'):
+    root.attributes('-type', 'utility')
+  app = App(master=root, url=sys.argv[1])
+  app.mainloop()
+
+class App(Frame):
+  def __init__(self, master=None, url=None):
+    Frame.__init__(self, master)
+    self.url = url
+    self.pack()
+    self.create_widgets()
+
+  def create_widgets(self):
+    self.setup_button = Button(self, text='Setup Game', command=self.setup_game)
+    self.setup_button.pack()
+
+  def send_message(self, data):
+    requests.post(self.url, data=json.dumps({'event': data}), headers={'Content-type': 'application/json'})
+
+  def setup_game(self):
+    for faction in factions:
+      data = {'type': 'app_mention', 'text': 'register %s' % faction, 'user': faction[:2]}
+      self.send_message(data)
+    data = {'type': 'app_mention', 'text': 'start game'}
+    self.send_message(data)
+    
+
+if __name__ == '__main__':
+  main()

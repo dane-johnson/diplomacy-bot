@@ -19,7 +19,7 @@ gamestate = {
   "players": {},
   "units": {},
   "orders": {},
-  "mode": "active",
+  "mode": "pregame",
   "gameboard": gameboard
 }
 
