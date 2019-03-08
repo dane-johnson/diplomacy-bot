@@ -20,12 +20,31 @@ class App(Frame):
   def __init__(self, master=None, url=None):
     Frame.__init__(self, master)
     self.url = url
+    self.message_type = StringVar()
+    self.message_type.set('app_mention')
+    self.user = StringVar()
+    self.user.set('au')
+    self.message_text = StringVar()
     self.pack()
     self.create_widgets()
 
   def create_widgets(self):
     self.setup_button = Button(self, text='Setup Game', command=self.setup_game)
     self.setup_button.pack()
+    self.controlgroup = Frame(self)
+    self.controlgroup.pack()
+    self.app_mention_radio = Radiobutton(self.controlgroup, text='app_mention', variable=self.message_type, value='app_mention')
+    self.app_mention_radio.grid(row=0, column=0)
+    self.channel_radio = Radiobutton(self.controlgroup, text='message', variable=self.message_type, value='message')
+    self.channel_radio.grid(row=0, column=1)
+    self.message_input = Entry(self.controlgroup, textvariable=self.message_text)
+    self.user_radios = [ Radiobutton(self.controlgroup, text=f, variable=self.user, value=f[:2]).grid(row=1, column=i) for i, f in enumerate(factions) ]
+    self.message_input.grid(row=2, column=0)
+    self.send_button = Button(self.controlgroup, text='Send', command=self.send_user_message)
+    self.send_button.grid(row=2, column=1)
+
+  def send_user_message(self):
+    self.send_message({'type': self.message_type.get(), 'user': self.user.get(), 'text': self.message_text.get(), 'channel': 'channel-%s' % self.user.get()})
 
   def send_message(self, data):
     requests.post(self.url, data=json.dumps({'event': data}), headers={'Content-type': 'application/json'})
