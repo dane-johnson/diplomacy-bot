@@ -102,7 +102,6 @@ def parse_order(order):
   support_groups = re.match(support_regex, order)
   if support_groups:
     order = {'action': 'support', 'territory': support_groups.group(1), 'supporting': support_groups.group(2)}
-    print support_groups.group(3)
     if support_groups.groups(3):
       order['to'] = support_groups.group(3)
     return order
@@ -207,8 +206,18 @@ def start_game():
       send_message_channel("These factions have no members: %s" % ", ".join(empty_factions))
     else:
       gamestate['mode'] = 'active'
-      send_message_channel("@here game on!!!")
+      new_round()
+      send_message_channel("@here Game on!!!")
 
+def new_round():
+  if 'season' not in gamestate or gamestate['season'] == 'fall':
+    gamestate['season'] = 'spring'
+  else:
+    gamestate['season'] = 'fall'
+  ## Every piece holds by default
+  for territory in filter(lambda x: gamestate['gameboard'][x]['piece'] != 'none', gamestate['gameboard']):
+    add_order({'action': 'hold', 'territory': territory})
+  
 def restore_gamestate():
   global gamestate
   file = open(filename, 'r')
