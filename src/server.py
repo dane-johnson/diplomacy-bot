@@ -127,11 +127,6 @@ def order_error(order, user):
   ## Make sure the user can control this army/navy
   if gamestate['gameboard'][order['territory']]['piece'].split()[0] != get_faction(user):
     return "%s does not control %s" % (get_faction(user), order['territory'])
-  ## Make sure to/from/supporting are neighbors
-  territories_in_order = map(lambda x: order.get(x, None), ['to', 'from', 'support'])
-  for territory in territories_in_order:
-    if territory and territory not in gamestate['gameboard'][order['territory']]['borders']:
-      return "%s does not border %s" % (territory, order['territory'])
   return None
 
 def handle_in_channel_message(event):
@@ -211,7 +206,7 @@ def start_game():
     if len(empty_factions) > 0:
       send_message_channel("These factions have no members: %s" % ", ".join(empty_factions))
     else:
-      gamestate['mode'] == 'active'
+      gamestate['mode'] = 'active'
       send_message_channel("@here game on!!!")
 
 def restore_gamestate():
