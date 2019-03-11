@@ -20,6 +20,8 @@ class App(Frame):
   def __init__(self, master=None, url=None):
     Frame.__init__(self, master)
     self.url = url
+    self.history = []
+    self.place_in_history = 0
     self.message_type = StringVar()
     self.message_type.set('app_mention')
     self.user = StringVar()
@@ -37,13 +39,28 @@ class App(Frame):
     self.app_mention_radio.grid(row=0, column=0)
     self.channel_radio = Radiobutton(self.controlgroup, text='message', variable=self.message_type, value='message')
     self.channel_radio.grid(row=0, column=1)
-    self.message_input = Entry(self.controlgroup, textvariable=self.message_text)
     self.user_radios = [ Radiobutton(self.controlgroup, text=f, variable=self.user, value=f[:2]).grid(row=1, column=i) for i, f in enumerate(factions) ]
+    self.message_input = Entry(self.controlgroup, textvariable=self.message_text)
     self.message_input.grid(row=2, column=0)
+    self.message_input.bind("<Up>", self.recall_history)
+    self.message_input.bind("<Down>", self.recall_history)
     self.send_button = Button(self.controlgroup, text='Send', command=self.send_user_message)
     self.send_button.grid(row=2, column=1)
 
+  def recall_history(self, evt):
+    if len(self.history) == 0:
+      return 'break'
+    if evt.keycode == 0x7ef700: ## UP
+      self.place_in_history = (self.place_in_history - 1) % len(self.history)
+    elif evt.keycode == 0x7df701: ## DOWN
+      self.place_in_history = (self.place_in_history + 1) % len(self.history)
+    history_element = self.history[self.place_in_history]
+    self.message_text.set(history_element)
+    return 'break'
+
   def send_user_message(self):
+    self.history.append(self.message_text.get())
+    self.place_in_history = 0
     self.send_message({'type': self.message_type.get(), 'user': self.user.get(), 'text': self.message_text.get(), 'channel': 'channel-%s' % self.user.get()})
 
   def send_message(self, data):
