@@ -117,6 +117,9 @@ def add_order(order):
     del gamestate['orders'][order['territory']]
   gamestate['orders'][order['territory']] = order
 
+def get_order(space):
+  return gamestate['orders'][space]
+
 def order_error(order, user):
   territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'support'])
   for territory in territories_in_order:
@@ -225,12 +228,11 @@ def new_round():
 
 def resolve_orders():
   ## If support orders are coming from attacking spaces, they become hold orders
-  attacked_spaces = map(lambda x: gamestate['orders'][x]['to'],
-                        filter(lambda x: gamestate['orders'][x]['action'] == 'move/attack',
-                               gamestate['orders']))
-  for space in attacked_spaces:
-    if space in gamestate['orders'] and gamestate['orders'][space]['action'] == 'support':
-      add_order({'territory': space, 'action': 'hold'})
+  attack_orders = filter(lambda x: get_order(x)['action'] == 'move/attack', gamestate['orders'])
+  print gamestate['orders']
+  
+  ## Illegal convoys become hold orders
+  
   
 def restore_gamestate():
   global gamestate
