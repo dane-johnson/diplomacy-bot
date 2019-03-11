@@ -161,6 +161,11 @@ def handle_in_channel_message(event):
   if start_groups:
     start_game()
 
+  end_regex = r"end"
+  end_groups = re.search(end_regex, event['text'].lower())
+  if end_groups:
+    resolve_orders()
+
   if filename:
     save_gamestate()
 
@@ -217,6 +222,15 @@ def new_round():
   ## Every piece holds by default
   for territory in filter(lambda x: gamestate['gameboard'][x]['piece'] != 'none', gamestate['gameboard']):
     add_order({'action': 'hold', 'territory': territory})
+
+def resolve_orders():
+  ## If support orders are coming from attacking spaces, they become hold orders
+  attacked_spaces = map(lambda x: gamestate['orders'][x]['to'],
+                        filter(lambda x: gamestate['orders'][x]['action'] == 'move/attack',
+                               gamestate['orders']))
+  for space in attacked_spaces:
+    if space in gamestate['orders'] and gamestate['orders'][space]['action'] == 'support':
+      add_order({'territory': space, 'action': 'hold'})
   
 def restore_gamestate():
   global gamestate
