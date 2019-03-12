@@ -57,7 +57,7 @@ def return_request_challenge():
 
 def send_message_channel(message):
   ## Sick of having to check slack, allow an environment variable to print to screen
-  if os.environ["DIPLOMACY_DEMO"]:
+  if "DIPLOMACY_DEMO" in os.environ:
     print 'CHANNEL-MESSAGE:%s' % message
     return
   
@@ -72,7 +72,7 @@ def send_message_channel(message):
 
 def send_image_channel(image):
   ## Sick of having to check slack, allow an environment variable to display on screen
-  if os.environ["DIPLOMACY_DEMO"]:
+  if "DIPLOMACY_DEMO" in os.environ:
     image.show()
     return
 
@@ -88,7 +88,7 @@ def send_image_channel(image):
 
 def send_message_im(message, app_channel):
     ## Sick of having to check slack, allow an environment variable to print to screen
-  if os.environ["DIPLOMACY_DEMO"]:
+  if "DIPLOMACY_DEMO" in os.environ:
     print 'IM-%s:%s' % (app_channel, message)
     return
 
