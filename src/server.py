@@ -9,6 +9,7 @@ from flask import Flask, request
 app = Flask(__name__)
 
 from gameboard import gameboard, starting_positions
+from image import draw_gameboard
 
 SLACK_URL = "https://slack.com/api/chat.postMessage"
 
@@ -68,6 +69,13 @@ def send_message_channel(message):
   }
 
   requests.post(SLACK_URL, data=body, headers=headers)
+
+def send_image_channel(image):
+    ## Sick of having to check slack, allow an environment variable to display on screen
+  if os.environ["DIPLOMACY_DEMO"]:
+    image.show()
+    return
+  pass ## IDK yet
 
 def send_message_im(message, app_channel):
     ## Sick of having to check slack, allow an environment variable to print to screen
@@ -156,6 +164,8 @@ def handle_in_channel_message(event):
     elif item == 'board':
       board_string = print_board()
       send_message_channel(board_string)
+      gameboard_img = draw_gameboard(gamestate['gameboard'])
+      send_image_channel(gameboard_img)
     else:
       send_message_channel("I don't know what %s is." % item)
 
