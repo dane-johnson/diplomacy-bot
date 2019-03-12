@@ -60,7 +60,7 @@ class GameCanvas(Canvas):
   def paint(self):
     self.create_image(0, 0, anchor=NW, image=self.gameimage)
     for space in self.spaces:
-      self.create_text(self.spaces[space], text=space)
+      self.create_text(self.spaces[space], text=space, fill='red')
     
 
 if __name__ == "__main__":
