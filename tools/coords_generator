@@ -46,7 +46,9 @@ class App(Frame):
     self.canvas.paint()
 
   def dump_spaces(self):
-    json.dump(self.spaces, "resources/standard.json")
+    file = open('resources/standard.json', 'w')
+    json.dump(self.spaces, file)
+    file.close()
 
 class GameCanvas(Canvas):
   def __init__(self, master=None, onclick=None, image=None, spaces=None):
