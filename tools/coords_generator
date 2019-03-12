@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+import sys
+import json
+from Tkinter import *
+from PIL import ImageTk 
+
+sys.path.append('src/')
+from gameboard import gameboard
+
+def main():
+  spaces = gameboard.keys()
+  root = Tk()
+  if sys.platform.startswith('linux'):
+    root.attributes('-type', 'utility')
+  app = App(master=root, spaces_to_choose=spaces)
+  app.mainloop()
+
+class App(Frame):
+  def __init__(self, master=None, spaces_to_choose=[]):
+    Frame.__init__(self, master)
+    self.pack()
+    self.spaces_to_choose = spaces_to_choose
+    self.spaces = {}
+    self.image = ImageTk.PhotoImage(file='resources/gameboard.png')
+    self.click_directions = StringVar()
+    self.click_directions.set("Choose space for '%s'" % spaces_to_choose[0])
+    self.create_widgets()
+
+  def create_widgets(self):
+    self.clicklabel = Label(self, textvariable=self.click_directions)
+    self.clicklabel.pack()
+    self.canvas = GameCanvas(self, self.oncanvasclick, self.image, self.spaces)
+    self.canvas.paint()
+    self.canvas.pack()
+
+  def oncanvasclick(self, evt):
+    if len(self.spaces_to_choose) == 0:
+      return
+    self.spaces[self.spaces_to_choose[0]] = (evt.x, evt.y)
+    if len(self.spaces_to_choose) == 1:
+      self.click_directions.set("Done!")
+      self.dump_spaces()
+    else:
+      self.click_directions.set("Choose space for '%s'" % self.spaces_to_choose[1])
+    del self.spaces_to_choose[0]
+    self.canvas.paint()
+
+  def dump_spaces(self):
+    json.dump(self.spaces, "resources/standard.json")
+
+class GameCanvas(Canvas):
+  def __init__(self, master=None, onclick=None, image=None, spaces=None):
+    Canvas.__init__(self, master, width=image.width(), height=image.height())
+    self.bind("<Button-1>", onclick)
+    self.gameimage = image
+    self.spaces = spaces
+    
+  def paint(self):
+    self.create_image(0, 0, anchor=NW, image=self.gameimage)
+    for space in self.spaces:
+      self.create_text(self.spaces[space], text=space)
+    
+
+if __name__ == "__main__":
+  main()
