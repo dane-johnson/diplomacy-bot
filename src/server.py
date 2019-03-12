@@ -12,6 +12,7 @@ from gameboard import gameboard, starting_positions
 from image import draw_gameboard
 
 SLACK_URL = "https://slack.com/api/chat.postMessage"
+SLACK_IMG_URL = "https://slack.com/api/files.upload"
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
 MODES = frozenset(["pregame", "ingame"])
@@ -64,18 +65,26 @@ def send_message_channel(message):
     "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
   }
   body = {
-    "text": message,
     "channel": "#diplomacy"
   }
 
   requests.post(SLACK_URL, data=body, headers=headers)
 
 def send_image_channel(image):
-    ## Sick of having to check slack, allow an environment variable to display on screen
+  ## Sick of having to check slack, allow an environment variable to display on screen
   if os.environ["DIPLOMACY_DEMO"]:
     image.show()
     return
-  pass ## IDK yet
+
+  image.save('/tmp/board.png')
+  headers = {
+    "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
+  }
+  body = {
+    "channels": "#diplomacy"
+  }
+  files = {"file": open('/tmp/board.png')}
+  requests.post(SLACK_IMG_URL, data=body, headers=headers, files=files)
 
 def send_message_im(message, app_channel):
     ## Sick of having to check slack, allow an environment variable to print to screen
@@ -162,8 +171,6 @@ def handle_in_channel_message(event):
       faction_string = print_factions()
       send_message_channel(faction_string)
     elif item == 'board':
-      board_string = print_board()
-      send_message_channel(board_string)
       gameboard_img = draw_gameboard(gamestate['gameboard'])
       send_image_channel(gameboard_img)
     else:
@@ -189,13 +196,6 @@ def print_factions():
     for player in gamestate['players'][faction]:
       string += "<@%s>, " % player
     string += "\n"
-  return string
-
-def print_board():
-  string = ""
-  for space in gamestate['gameboard']:
-    if gamestate['gameboard'][space]['piece'] != 'none':
-      string += "%s: %s\n" % (space, gamestate['gameboard'][space]['piece'])
   return string
 
 def get_all_players():
