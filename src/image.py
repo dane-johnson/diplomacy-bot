@@ -44,8 +44,8 @@ def get_piece_color(piece_name, rgb):
   else:
     piece = _fleet.resize(FLEET_SIZE).convert('RGBA')
   pixels = piece.load()
-  for y in xrange(piece.size[1]):
-    for x in xrange(piece.size[0]):
+  for y in range(piece.size[1]):
+    for x in range(piece.size[0]):
       if pixels[x, y] == (255, 255, 255, 255):
         pixels[x, y] = (r, g, b, 255)
   return piece
