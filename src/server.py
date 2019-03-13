@@ -4,14 +4,13 @@ import pickle
 import re
 import requests
 from dotenv import load_dotenv
-from functools import reduce
 load_dotenv()
 from flask import Flask, request
 app = Flask(__name__)
 
 from gameboard import gameboard, starting_positions
 from image import draw_gameboard
-from interfaces import SlackInterface, CLIInterface, DiscordInterface
+from interfaces import SlackInterface, CLIInterface
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
 MODES = frozenset(["pregame", "ingame"])
@@ -30,10 +29,6 @@ if os.environ['CHAT_APPLICATION'] == 'slack':
   send_message_im = SlackInterface.send_message_im
   send_message_channel = SlackInterface.send_message_channel
   send_image_channel = SlackInterface.send_image_channel
-elif os.environ['CHAT_APPLICATION'] == 'discord':
-  send_message_im = DiscordInterface.send_message_im
-  send_message_channel = DiscordInterface.send_message_channel
-  send_image_channel = DiscordInterface.send_image_channel
 else:
   send_message_im = CLIInterface.send_message_im
   send_message_channel = CLIInterface.send_message_channel
@@ -42,7 +37,7 @@ else:
 @app.route("/event", methods=['POST'])
 def return_request_challenge():
   params = request.get_json()
-  print(params)
+  print params
   if 'challenge' in params:
     return request.get_json()['challenge']
   event = params["event"]
@@ -103,7 +98,7 @@ def get_order(space):
   return gamestate['orders'][space]
 
 def order_error(order, user):
-  territories_in_order = [order.get(x, None) for x in ['territory', 'to', 'from', 'support']]
+  territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'support'])
   for territory in territories_in_order:
     ## Make sure territory/to/from/supports is on the board
     if territory and territory not in gamestate['gameboard']:
@@ -164,7 +159,7 @@ def print_factions():
   return string
 
 def get_all_players():
-  return reduce(lambda x, y: x | y, list(gamestate['players'].values()))
+  return reduce(lambda x, y: x | y, gamestate['players'].values())
 
 def get_faction(player):
   for faction in FACTIONS:
@@ -184,7 +179,7 @@ def start_game():
   if gamestate['mode'] != 'pregame':
     send_message_channel("Game is already on!")
   else:
-    empty_factions = [x for x in FACTIONS if len(gamestate['players'][x]) == 0]
+    empty_factions = filter(lambda x: len(gamestate['players'][x]) == 0, FACTIONS)
     if len(empty_factions) > 0:
       send_message_channel("These factions have no members: %s" % ", ".join(empty_factions))
     else:
@@ -198,13 +193,13 @@ def new_round():
   else:
     gamestate['season'] = 'fall'
   ## Every piece holds by default
-  for territory in [x for x in gamestate['gameboard'] if gamestate['gameboard'][x]['piece'] != 'none']:
+  for territory in filter(lambda x: gamestate['gameboard'][x]['piece'] != 'none', gamestate['gameboard']):
     add_order({'action': 'hold', 'territory': territory})
 
 def resolve_orders():
   ## If support orders are coming from attacking spaces, they become hold orders
-  attack_orders = [x for x in gamestate['orders'] if get_order(x)['action'] == 'move/attack']
-  print(gamestate['orders'])
+  attack_orders = filter(lambda x: get_order(x)['action'] == 'move/attack', gamestate['orders'])
+  print gamestate['orders']
   
   ## Illegal convoys become hold orders
   

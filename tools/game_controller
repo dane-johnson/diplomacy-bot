@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from tkinter import *
+from Tkinter import *
 import requests
 import sys
 import json
@@ -8,7 +8,7 @@ factions = ["austria-hungary", "england", "france", "germany", "italy", "russia"
 
 def main():
   if (len(sys.argv) < 2):
-    print("usage %s <url>" % sys.argv[0])
+    print "usage %s <url>" % sys.argv[0]
     exit(1)
   root = Tk()
   if sys.platform.startswith('linux'):

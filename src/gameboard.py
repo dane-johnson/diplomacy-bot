@@ -107,23 +107,23 @@ starting_positions = {
 def print_board_issues():
   for territory in gameboard:
     if not re.match(r"[a-z]{3}", territory):
-      print("%s isn't a valid territory name" % territory)
+      print "%s isn't a valid territory name" % territory
     if not 'type' in gameboard[territory] or gameboard[territory]['type'] not in frozenset(['land', 'water', 'coastal']):
-      print("%s has an incorrect type" % territory)
+      print "%s has an incorrect type" % territory
       continue
     if gameboard[territory]['type'] in frozenset(['land', 'coastal']) and 'supply' not in gameboard[territory]:
-      print("%s has an incorrect supply" % territory)
+      print "%s has an incorrect supply" % territory
     if 'borders' not in gameboard[territory]:
-      print("%s missing borders" % territory)
+      print "%s missing borders" % territory
       continue
     for border in gameboard[territory]['borders']:
       if border not in gameboard:
-        print("%s borders %s but %s isn't on the gameboard" % (territory, border, border))
+        print "%s borders %s but %s isn't on the gameboard" % (territory, border, border)
       elif territory not in frozenset(gameboard[border]['borders']):
-        print("%s borders %s but %s does not border %s" % (territory, border, border, territory))
-  supply_centers = [x for x in gameboard if gameboard[x]['type'] != 'water' and gameboard[x]['supply'] != 'none']
+        print "%s borders %s but %s does not border %s" % (territory, border, border, territory)
+  supply_centers = filter(lambda x: gameboard[x]['type'] != 'water' and gameboard[x]['supply'] != 'none', gameboard)
   if len(supply_centers) != 34:
-    print('There are not the correct amount of supply centers (%d/34)' % len(supply_centers))
+    print 'There are not the correct amount of supply centers (%d/34)' % len(supply_centers)
 
 if __name__ == "__main__":
   print_board_issues()

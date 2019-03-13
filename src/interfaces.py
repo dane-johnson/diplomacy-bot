@@ -1,11 +1,8 @@
 import os
 import requests
-import json
 
 SLACK_URL = "https://slack.com/api/chat.postMessage"
 SLACK_IMG_URL = "https://slack.com/api/files.upload"
-
-DISCORD_URL = "https://discordapp.com/api"
 
 class Interface:
   @staticmethod
@@ -21,11 +18,11 @@ class Interface:
 class CLIInterface(Interface):
   @classmethod
   def send_message_im(cls, message, app_channel):
-    print('IM-%s:%s' % (app_channel, message))
+    print 'IM-%s:%s' % (app_channel, message)
 
   @classmethod
   def send_message_channel(cls, message):
-    print('CHANNEL-MESSAGE:%s' % message)
+    print 'CHANNEL-MESSAGE:%s' % message
 
   @classmethod
   def send_image_channel(cls, image):
@@ -54,7 +51,7 @@ class SlackInterface(Interface):
       "channel": "#diplomacy"
     }
 
-    requests.post(SLACK_URL, data=body, headers=headers)
+    print requests.post(SLACK_URL, data=body, headers=headers)
 
   @classmethod
   def send_image_channel(cls, image):
@@ -67,22 +64,3 @@ class SlackInterface(Interface):
     }
     files = {"file": open('/tmp/board.png')}
     requests.post(SLACK_IMG_URL, data=body, headers=headers, files=files)
-
-class DiscordInterface(Interface):
-  @classmethod
-  def send_message_channel(cls, message):
-    headers = {
-      "Authorization": "Bot %s" % os.environ["DISCORD_BOT_TOKEN"],
-      "Content-Type": 'application/json'
-    }
-    print(headers)
-    body = {
-      "content": message
-    }
-    r = requests.post("%s/channels/%s/messages" % (DISCORD_URL, os.environ["DISCORD_CHANNEL_ID"]),
-                      data=json.dumps(body),
-                      headers=headers)
-    print(r.json())
-  
-
-    
