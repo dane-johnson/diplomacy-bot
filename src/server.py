@@ -10,9 +10,7 @@ app = Flask(__name__)
 
 from gameboard import gameboard, starting_positions
 from image import draw_gameboard
-
-SLACK_URL = "https://slack.com/api/chat.postMessage"
-SLACK_IMG_URL = "https://slack.com/api/files.upload"
+from interfaces import SlackInterface, CLIInterface
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
 MODES = frozenset(["pregame", "ingame"])
@@ -26,6 +24,15 @@ gamestate = {
 }
 
 filename = None
+
+if os.environ['CHAT_APPLICATION'] == 'slack':
+  send_message_im = SlackInterface.send_message_im
+  send_message_channel = SlackInterface.send_message_channel
+  send_image_channel = SlackInterface.send_image_channel
+else:
+  send_message_im = CLIInterface.send_message_im
+  send_message_channel = CLIInterface.send_message_channel
+  send_image_channel = CLIInterface.send_image_channel
 
 @app.route("/event", methods=['POST'])
 def return_request_challenge():
@@ -54,54 +61,6 @@ def return_request_challenge():
     else:
       send_message_im("I don't know what you mean!", event["channel"])
   return "OK"
-
-def send_message_channel(message):
-  ## Sick of having to check slack, allow an environment variable to print to screen
-  if False and "DIPLOMACY_DEMO" in os.environ:
-    print 'CHANNEL-MESSAGE:%s' % message
-    return
-  
-  headers = {
-    "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
-  }
-  body = {
-    "text": message,
-    "channel": "#diplomacy"
-  }
-
-  print requests.post(SLACK_URL, data=body, headers=headers)
-
-def send_image_channel(image):
-  ## Sick of having to check slack, allow an environment variable to display on screen
-  if "DIPLOMACY_DEMO" in os.environ:
-    image.show()
-    return
-
-  image.save('/tmp/board.png')
-  headers = {
-    "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
-  }
-  body = {
-    "channels": "#diplomacy"
-  }
-  files = {"file": open('/tmp/board.png')}
-  requests.post(SLACK_IMG_URL, data=body, headers=headers, files=files)
-
-def send_message_im(message, app_channel):
-    ## Sick of having to check slack, allow an environment variable to print to screen
-  if "DIPLOMACY_DEMO" in os.environ:
-    print 'IM-%s:%s' % (app_channel, message)
-    return
-
-  headers = {
-    "Authorization": "Bearer %s" % os.environ["BOT_TOKEN"]
-  }
-  body = {
-    "text": message,
-    "channel": app_channel,
-  }
-
-  requests.post(SLACK_URL, data=body, headers=headers)
 
 def parse_order(order):
   formatted_order = order.strip().lower()
