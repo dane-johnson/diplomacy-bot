@@ -140,6 +140,19 @@ def handle_in_channel_message(event):
     else:
       send_message_channel("I don't know what %s is." % item)
 
+  amend_regex = r"amend (.*)"
+  amend_groups = re.search(amend_regex, event['text'].lower())
+  if amend_groups:
+    amendments_regex = r"([-a-z]+) (army|fleet|remove) at ([a-z]{3})"
+    matches = re.findall(amendments_regex, amend_groups.group(1))
+    for match in matches:
+      faction, piece, territory = match
+      if faction in FACTIONS and territory in gamestate['gameboard']:
+        if piece == 'remove':
+          remove_piece(territory)
+        else:
+          add_piece('%s %s' % (faction, piece), territory)
+
   start_regex = r"start"
   start_groups = re.search(start_regex, event['text'].lower())
   if start_groups:
@@ -190,6 +203,12 @@ def start_game():
       gamestate['mode'] = 'active'
       new_round()
       send_message_channel("@here Game on!!!")
+
+def add_piece(piece, territory):
+  gamestate['gameboard'][territory]['piece'] = piece
+
+def remove_piece(territory):
+  gamestate['gameboard'][territory]['piece'] = 'none'
 
 def new_round():
   if 'season' not in gamestate or gamestate['season'] == 'fall':
