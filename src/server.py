@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 from gameboard import gameboard, starting_positions
 from image import draw_gameboard
-from interfaces import SlackInterface, CLIInterface
+from interfaces import SlackInterface, CLIInterface, DiscordInterface
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
 MODES = frozenset(["pregame", "ingame"])
@@ -29,6 +29,10 @@ if os.environ['CHAT_APPLICATION'] == 'slack':
   send_message_im = SlackInterface.send_message_im
   send_message_channel = SlackInterface.send_message_channel
   send_image_channel = SlackInterface.send_image_channel
+elif os.environ['CHAT_APPLICATION'] == 'discord':
+  send_message_im = DiscordInterface.send_message_im
+  send_message_channel = DiscordInterface.send_message_channel
+  send_image_channel = DiscordInterface.send_image_channel
 else:
   send_message_im = CLIInterface.send_message_im
   send_message_channel = CLIInterface.send_message_channel
