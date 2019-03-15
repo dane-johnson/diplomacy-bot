@@ -5,8 +5,6 @@ import re
 import requests
 from dotenv import load_dotenv
 load_dotenv()
-from flask import Flask, request
-app = Flask(__name__)
 
 from gameboard import gameboard, starting_positions
 from image import draw_gameboard
@@ -25,32 +23,6 @@ gamestate = {
 
 filename = None
 
-if os.environ['CHAT_APPLICATION'] == 'slack':
-  send_message_im = SlackInterface.send_message_im
-  send_message_channel = SlackInterface.send_message_channel
-  send_image_channel = SlackInterface.send_image_channel
-elif os.environ['CHAT_APPLICATION'] == 'discord':
-  send_message_im = DiscordInterface.send_message_im
-  send_message_channel = DiscordInterface.send_message_channel
-  send_image_channel = DiscordInterface.send_image_channel
-else:
-  send_message_im = CLIInterface.send_message_im
-  send_message_channel = CLIInterface.send_message_channel
-  send_image_channel = CLIInterface.send_image_channel
-
-@app.route("/event", methods=['POST'])
-def slack_hook():
-  params = request.get_json()
-  print params
-  if 'challenge' in params:
-    return request.get_json()['challenge']
-  event = params['event']
-  if event['type'] == 'message' and 'subtype' in event and event['subtype'] == 'bot_message':
-    ## Avoid infinite loop, ignore bot messages
-    return "OK"
-  handle_event(event)
-  return "OK"
-  
 def handle_event(event):
   if event["type"] == 'app_mention':
     handle_in_channel_message(event)
@@ -269,4 +241,13 @@ if __name__ == '__main__':
       save_gamestate()
   else:
     init_gamestate()
-  app.run('0.0.0.0', port=8080)
+  if os.environ['CHAT_APPLICATION'] == 'slack':
+    interface = SlackInterface(handle_event)
+  elif os.environ['CHAT_APPLICATION'] == 'discord':
+    interface = DiscordInterface(handle_event)
+  else:
+    interface = CLIInterface(handle_event)
+  send_message_im = interface.send_message_im
+  send_message_channel = interface.send_message_channel
+  send_image_channel = interface.send_image_channel
+  interface.run()
