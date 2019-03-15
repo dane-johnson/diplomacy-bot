@@ -39,16 +39,22 @@ else:
   send_image_channel = CLIInterface.send_image_channel
 
 @app.route("/event", methods=['POST'])
-def return_request_challenge():
+def slack_hook():
   params = request.get_json()
   print params
   if 'challenge' in params:
     return request.get_json()['challenge']
-  event = params["event"]
+  event = params['event']
+  if event['type'] == 'message' and 'subtype' in event and event['subtype'] == 'bot_message':
+    ## Avoid infinite loop, ignore bot messages
+    return "OK"
+  handle_event(event)
+  return "OK"
+  
+def handle_event(event):
   if event["type"] == 'app_mention':
     handle_in_channel_message(event)
-  elif event["type"] == 'message' and \
-       not ("subtype" in event and event["subtype"] == "bot_message"):
+  elif event["type"] == 'message':
     order = parse_order(event['text'])
     if order:
       if gamestate['mode'] == 'active':
@@ -64,7 +70,6 @@ def return_request_challenge():
         send_message_im("Wait to send orders until the game is started!", event['channel'])
     else:
       send_message_im("I don't know what you mean!", event["channel"])
-  return "OK"
 
 def parse_order(order):
   formatted_order = order.strip().lower()
