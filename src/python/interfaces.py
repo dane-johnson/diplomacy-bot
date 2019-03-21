@@ -102,6 +102,19 @@ class SlackInterface(Interface):
     requests.post(SLACK_IMG_URL, data=body, headers=headers, files=files)
 
 class DiscordInterface(Interface):
+  def __init__(self, handle_event):
+    self.app = Flask(__name__)
+    
+    @self.app.route("/event", methods=['POST'])
+    def discord_event():
+      params = request.get_json()
+      event = params['event']
+      handle_event(event)
+      return "OK"
+
+  def run(self):
+    self.app.run('0.0.0.0', port=8080)
+    
   @classmethod
   def send_message_channel(cls, message):
     headers = {
