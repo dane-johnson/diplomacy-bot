@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+source ./.env
+source ENV/bin/activate
+
+if [[ "$CHAT_APPLICATION" == "discord" ]]; then
+   node . &
+fi
+python src/python/server.py
+
+exit 0
