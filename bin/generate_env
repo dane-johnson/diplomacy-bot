@@ -1,0 +1,30 @@
+#!/bin/sh
+
+set -e
+
+echo "What chat application are you using?"
+
+read app
+
+case $app in
+    slack|Slack)
+        echo "What is your bot token?"
+        read slack_bot_token
+        printf "BOT_TOKEN=$slack_bot_token\nCHAT_APPLICATION=slack" > .env
+        ;;
+    discord|Discord)
+        echo "What is your bot token?"
+        read discord_bot_token
+        echo "What is the ID of the diplomacy game channel?"
+        read discord_channel_id
+        printf "DISCORD_BOT_TOKEN=$discord_bot_token\nDISCORD_CHANNEL_ID=$discord_channel_id\nCHAT_APPLICATION=discord" > .env
+        ;;
+    cli|CLI)
+        printf "CHAT_APPLICATION=cli" > .env
+        ;;
+    *)
+        echo "Only 'discord', 'slack' and 'cli' are allowed"
+        ;;
+esac
+
+exit 0
