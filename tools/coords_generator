@@ -4,7 +4,7 @@ import json
 from Tkinter import *
 from PIL import ImageTk 
 
-sys.path.append('src/')
+sys.path.append('src/python')
 from gameboard import gameboard
 
 def main():
