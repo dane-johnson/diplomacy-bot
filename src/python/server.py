@@ -79,6 +79,7 @@ def get_order(space):
   return gamestate['orders'][space]
 
 def order_error(order, user):
+  board = gamestate['gameboard']
   territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'support'])
   for territory in territories_in_order:
     ## Make sure territory/to/from/supports is on the board
@@ -87,6 +88,31 @@ def order_error(order, user):
   ## Make sure the user can control this army/navy
   if gamestate['gameboard'][order['territory']]['piece'].split()[0] != get_faction(user):
     return "%s does not control %s" % (get_faction(user), order['territory'])
+  piece = get_piece(order['territory'])
+  if order['action'] == 'convoy':
+    if piece.split()[1] == 'army':
+      return "You may not order an army to convoy"
+    if board[order['territory']]['type'] != 'water':
+      return "You cannot convoy from a coastal territory"
+    if get_piece(order['from']) == 'none' or get_piece(order['from']).split()[1] == 'fleet':
+      return "You can only convoy an army"
+    if board[order['to']]['type'] != 'coastal' or board[order['from']]['type'] != 'coastal':
+      return "You may only convoy between coastal territories"
+  if order['action'] == 'move/attack':
+   ## Don't allow armies to move to water spaces
+   if board[order['to']]['type'] == 'water' and piece.split()[1] == 'army':
+     return "Cannot move army to water space"
+   ## Don't allow fleets to move to land spaces
+   if board[order['to']]['type'] == 'land' and piece.split()[1] == 'fleet':
+     return "Cannot move fleet to land space"
+   if piece.split()[1] == 'fleet' and board[order['to']] not in board[order['territory']]['borders']:
+     return "Fleets can only move to adjacent spaces"
+   ## Don't allow movement to/from land or water spaces from/to non-adjacent spaces
+   if board[order['territory']]['type'] == 'land' and order['to'] not in board[order['territory']]['borders'] or \
+      board[order['to']]['type'] == 'land' and order['territory'] not in board[order['to']]['borders']:
+     return "Moving to this non-adjacent space is illegal"
+  if order['action'] == 'support' and board[order['to']] not in board[order['territory']]['borders']:
+    return "Cannot support %s from a non-adjacent space" % order['to']
   return None
 
 def handle_in_channel_message(event):
@@ -135,7 +161,7 @@ def handle_in_channel_message(event):
   if start_groups:
     start_game()
 
-  end_regex = r"end"
+  end_regex = r"end$"
   end_groups = re.search(end_regex, event['text'].lower())
   if end_groups:
     resolve_orders()
@@ -187,6 +213,9 @@ def add_piece(piece, territory):
 def remove_piece(territory):
   gamestate['gameboard'][territory]['piece'] = 'none'
 
+def get_piece(territory):
+  return gamestate['gameboard'][territory]['piece']
+
 def new_round():
   if 'season' not in gamestate or gamestate['season'] == 'fall':
     gamestate['season'] = 'spring'
@@ -197,11 +226,14 @@ def new_round():
     add_order({'action': 'hold', 'territory': territory})
 
 def resolve_orders():
-  ## If support orders are coming from attacking spaces, they become hold orders
-  attack_orders = filter(lambda x: get_order(x)['action'] == 'move/attack', gamestate['orders'])
-  print gamestate['orders']
-  
-  ## Illegal convoys become hold orders
+  board = gamestate['gameboard']
+  actions = gamestate['actions']
+
+  ## Resolve sea attack/support
+  attacks_to_water_spaces = filter(lambda x: (x['action'] == 'move/attack' and board[x['to']]['type'] == 'water'), actions)
+  supports_to_water_spaces = filter(lambda x: (x['action'] == 'support' and board[x['to']]['type'] == 'water'), actions)
+  holds_to_water_spaces = filter(lambda x: (x['action'] == 'holds' and board[x['territory']]['type'] == 'water'), actions)
+  ## Cancel illegal moves
   
   
 def restore_gamestate():
