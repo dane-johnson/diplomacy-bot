@@ -18,7 +18,8 @@ gamestate = {
   "units": {},
   "orders": {},
   "mode": "pregame",
-  "gameboard": gameboard
+  "gameboard": gameboard,
+  "dislodged_units": {}
 }
 
 filename = None
@@ -111,8 +112,13 @@ def order_error(order, user):
    if board[order['territory']]['type'] == 'land' and order['to'] not in board[order['territory']]['borders'] or \
       board[order['to']]['type'] == 'land' and order['territory'] not in board[order['to']]['borders']:
      return "Moving to this non-adjacent space is illegal"
-  if order['action'] == 'support' and board[order['to']] not in board[order['territory']]['borders']:
-    return "Cannot support %s from a non-adjacent space" % order['to']
+  if order['action'] == 'support':
+    if board[order['to']] not in board[order['territory']]['borders']:
+      return "Cannot support %s from a non-adjacent space" % order['to']
+    if board[order['to']]['type'] == 'land' and piece.split()[1] == 'fleet':
+      return "A fleet cannot support a land territory"
+    if board[order['to']]['type'] == 'water' and piece.split()[1] == 'army':
+      return "An army cannot support a water territory"
   return None
 
 def handle_in_channel_message(event):
@@ -227,14 +233,40 @@ def new_round():
 
 def resolve_orders():
   board = gamestate['gameboard']
-  actions = gamestate['actions']
+  orders = gamestate['orders']
 
-  ## Resolve sea attack/support
-  attacks_to_water_spaces = filter(lambda x: (x['action'] == 'move/attack' and board[x['to']]['type'] == 'water'), actions)
-  supports_to_water_spaces = filter(lambda x: (x['action'] == 'support' and board[x['to']]['type'] == 'water'), actions)
-  holds_to_water_spaces = filter(lambda x: (x['action'] == 'holds' and board[x['territory']]['type'] == 'water'), actions)
-  ## Cancel illegal moves
-  
+  ## Break all support and convoy order
+  for territory in orders:
+    order = orders[territory]
+    if order['action'] == 'move/attack' and order['to'] in orders:
+      if orders[order['to']]['action'] == 'support' and orders[order['to']]['to'] != territory:
+        add_order({'territory': order['to'], 'action': 'hold'})
+      if orders[order['to']]['action'] == 'convoy':
+        add_order({'territory': order['to'], 'action': 'hold'})
+
+  ## Determine which units are successfully convoyed
+  for territory in orders:
+    order = orders[territory]
+    if order['action'] == 'move/attack' and order['to'] not in board[territory]['borders']:
+      if is_illegal_convoy(order):
+        add_order({'territory': territory, 'action': 'hold'})
+
+def is_illegal_convoy(order):
+  board = gamestate['gameboard']
+  orders = gamestate['orders']
+  relevant_convoys = set(filter(lambda x: orders[x]['action'] == 'convoy' and orders[x]['from'] == order['territory'] and orders[x]['to'] == order['to'], gamestate['orders']))
+  ## Perform a BFS to see if we can reach 'to' from 'territory'
+  queue = [order['territory']]
+  while len(queue) > 0:
+    territory = queue[0]
+    del queue[0]
+    if territory in board[order['to']]['borders']:
+      return False
+    for space in board[territory]['borders']:
+      if space in relevant_convoys:
+        queue.append(space)
+        relevant_convoys.remove(space)
+  return True
   
 def restore_gamestate():
   global gamestate
