@@ -81,7 +81,7 @@ def get_order(space):
 
 def order_error(order, user):
   board = gamestate['gameboard']
-  territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'support'])
+  territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'supporting'])
   for territory in territories_in_order:
     ## Make sure territory/to/from/supports is on the board
     if territory and territory not in gamestate['gameboard']:
@@ -235,7 +235,7 @@ def resolve_orders():
   board = gamestate['gameboard']
   orders = gamestate['orders']
 
-  ## Break all support and convoy order
+  ## Break all support and convoy orders
   for territory in orders:
     order = orders[territory]
     if order['action'] == 'move/attack' and order['to'] in orders:
@@ -247,9 +247,25 @@ def resolve_orders():
   ## Determine which units are successfully convoyed
   for territory in orders:
     order = orders[territory]
-    if order['action'] == 'move/attack' and order['to'] not in board[territory]['borders']:
-      if is_illegal_convoy(order):
-        add_order({'territory': territory, 'action': 'hold'})
+    if order['action'] == 'move/attack':
+      if order['to'] not in board[territory]['borders']:
+        if is_illegal_convoy(order):
+          add_order({'territory': territory, 'action': 'hold'})
+        else:
+          order['is_convoyed'] = True
+      else:
+        order['is_convoyed'] = False
+
+  ## Calculate support for each attacking and holding piece
+  for territory in orders:
+    order = get_order(territory)
+    if order['action'] in frozenset(['move/attack', 'hold']):
+      increase_support(territory)
+    elif order['action'] == 'support':
+      increase_support(order['supporting'])
+
+  for territory in orders:
+    print get_order(territory)
 
 def is_illegal_convoy(order):
   board = gamestate['gameboard']
@@ -267,6 +283,15 @@ def is_illegal_convoy(order):
         queue.append(space)
         relevant_convoys.remove(space)
   return True
+  
+def increase_support(territory):
+  order = get_order(territory)
+  if order['action'] not in frozenset(['move/attack', 'hold']):
+    return
+  if 'support' not in order:
+    order['support'] = 1
+  else:
+    order['support'] += 1
   
 def restore_gamestate():
   global gamestate
