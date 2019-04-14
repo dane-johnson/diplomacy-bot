@@ -3,6 +3,7 @@ from Tkinter import *
 import requests
 import sys
 import json
+from functools import partial
 
 factions = ["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"]
 
@@ -44,18 +45,18 @@ class App(Frame):
     self.inputgroup.pack()
     self.message_input = Entry(self.inputgroup, textvariable=self.message_text, width=40)
     self.message_input.grid(row=2, column=0)
-    self.message_input.bind("<Up>", self.recall_history)
-    self.message_input.bind("<Down>", self.recall_history)
+    self.message_input.bind("<Up>", partial(self.recall_history, direction="up"))
+    self.message_input.bind("<Down>", partial(self.recall_history, direction="down"))
     self.message_input.bind("<Return>", self.send_user_message)
     self.send_button = Button(self.inputgroup, text='Send', command=self.send_user_message)
     self.send_button.grid(row=2, column=1)
 
-  def recall_history(self, evt):
+  def recall_history(self, evt, direction):
     if len(self.history) == 0:
       return 'break'
-    if evt.keycode == 0x7ef700: ## UP
+    if direction == 'up':
       self.place_in_history = (self.place_in_history - 1) % len(self.history)
-    elif evt.keycode == 0x7df701: ## DOWN
+    elif direction == 'down':
       self.place_in_history = (self.place_in_history + 1) % len(self.history)
     history_element = self.history[self.place_in_history]
     self.message_text.set(history_element)
