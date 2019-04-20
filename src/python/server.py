@@ -61,7 +61,7 @@ def parse_order(order):
   support_groups = re.match(support_regex, order)
   if support_groups:
     order = {'action': 'support', 'territory': support_groups.group(1), 'supporting': support_groups.group(2)}
-    if support_groups.groups(3):
+    if support_groups.group(3):
       order['to'] = support_groups.group(3)
     return order
 
