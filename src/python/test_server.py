@@ -27,5 +27,14 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(
       server.parse_order("fleet abc convoys army bcd to cde"),
       {"action": "convoy", "territory": "abc", "from": "bcd", "to": "cde"})
+  def test_add_order(self):
+    hold_order = {"action": "hold", "territory": "abc"}
+    attack_order = {"action": "move/attack", "territory": "abc", "to": "bcd"}
+    server.gamestate['orders'] = {}
+    server.add_order(hold_order)
+    self.assertEqual(server.gamestate['orders'], {"abc": hold_order})
+    server.add_order(attack_order)
+    self.assertEqual(server.gamestate['orders'], {"abc": attack_order})
+
 if __name__ == "__main__":
   unittest.main()
