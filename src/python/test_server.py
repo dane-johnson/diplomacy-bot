@@ -63,7 +63,48 @@ class ServerTest(unittest.TestCase):
       server.order_error({"action": "convoy", "territory": "abc", "from": "bcd", "to": "xyz"}, "england"),
       "Territory bcd is not valid"
     )
+
+  def test_resolve_order_illegal_convoy(self):
+    server.gamestate['gameboard'] = {"ion" : {"type": "water", "borders": set([]), "piece": "russia fleet"},
+                                     "bud" : {"type": "land", "borders": set(["gal"]), "piece": "russia army"},
+                                     "gal" : {"type": "land", "borders": set(["bud"])}}
+    server.add_order({"territory": "ion", "action": "convoy", "from": "bud", "to": "gal"})
+    server.add_order({"territory": "bud", "action": "move/attack", "to": "gal"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['bud']['is_convoyed'], False)
+
+  def test_resolve_order_standoff_equal(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp"]), "piece": "russia army"},
+                                     "stp": {"type": "land", "borders": set(["mos"]), "piece": "germany army"}}
+    server.add_order({"territory": "stp", "action": "move/attack", "to": "mos"})
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "stp"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['stp']['action'], 'hold')
+    self.assertEqual(server.gamestate['orders']['mos']['action'], 'hold')
     
+  def test_resolve_order_standoff_unequal(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp", "lvn"]), "piece": "russia army"},
+                                     "stp": {"type": "land", "borders": set(["mos", "lvn"]), "piece": "germany army"},
+                                     "lvn": {"type": "land", "borders": set(["mos", "stp"]), "piece": "russia army"}}
+    server.add_order({"territory": "stp", "action": "move/attack", "to": "mos"})
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "stp"})
+    server.add_order({"territory": "lvn", "action": "support", "supporting": "mos", "to": "stp"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
+    self.assertNotIn('stp', server.gamestate['orders'])
+    self.assertNotIn('stp', server.gamestate['gameboard'])
+    self.assertEqual(server.gamestate['dislodged_units']['stp'], "germany army")
+
+  def test_resolve_order_standoff_equal_convoyed(self):
+    server.gamestate['gameboard'] = {"swe": {"type": "coastal", "borders": set(["fin", "bot"]), "piece": "russia army"},
+                                     "fin": {"type": "coastal", "borders": set(["swe", "bot"]), "piece": "germany army"},
+                                     "bot": {"type": "water", "borders": set(["swe", "fin"]), "piece": "germany fleet"}}
+    server.add_order({"territory": "swe", "action": "move/attack", "to": "fin"})
+    server.add_order({"territory": "fin", "action": "move/attack", "to": "swe"})
+    server.add_order({"territory": "bot", "action": "convoy", "from": "fin", "to": "swe"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['swe']['action'], 'move/attack')
+    self.assertEqual(server.gamestate['orders']['fin']['action'], 'move/attack')
 
 
 if __name__ == "__main__":

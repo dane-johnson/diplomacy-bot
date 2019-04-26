@@ -77,7 +77,8 @@ def add_order(order):
   gamestate['orders'][order['territory']] = order
 
 def get_order(space):
-  return gamestate['orders'][space]
+  if space in gamestate['orders']: return gamestate['orders'][space]
+  else: return None
 
 def order_error(order, user):
   board = gamestate['gameboard']
@@ -113,7 +114,7 @@ def order_error(order, user):
       board[order['to']]['type'] == 'land' and order['territory'] not in board[order['to']]['borders']:
      return "Moving to this non-adjacent space is illegal"
   if order['action'] == 'support':
-    if board[order['to']] not in board[order['territory']]['borders']:
+    if order['to'] not in board[order['territory']]['borders']:
       return "Cannot support %s from a non-adjacent space" % order['to']
     if board[order['to']]['type'] == 'land' and piece.split()[1] == 'fleet':
       return "A fleet cannot support a land territory"
@@ -222,6 +223,9 @@ def remove_piece(territory):
 def get_piece(territory):
   return gamestate['gameboard'][territory]['piece']
 
+def get_territory(territory):
+  return gamestate['gameboard'][territory]
+
 def new_round():
   if 'season' not in gamestate or gamestate['season'] == 'fall':
     gamestate['season'] = 'spring'
@@ -244,17 +248,14 @@ def resolve_orders():
       if orders[order['to']]['action'] == 'convoy':
         add_order({'territory': order['to'], 'action': 'hold'})
 
-  ## Determine which units are successfully convoyed
+  ## Determine which units are successfully moved, and which are convoyed
   for territory in orders:
     order = orders[territory]
     if order['action'] == 'move/attack':
-      if order['to'] not in board[territory]['borders']:
-        if is_illegal_convoy(order):
-          add_order({'territory': territory, 'action': 'hold'})
-        else:
-          order['is_convoyed'] = True
+      if is_illegal_move(order):
+        add_order({'territory': territory, 'action': 'hold', 'is_convoyed': False})
       else:
-        order['is_convoyed'] = False
+        order['is_convoyed'] = is_convoyed(order)
 
   ## Calculate support for each attacking and holding piece
   for territory in orders:
@@ -264,10 +265,33 @@ def resolve_orders():
     elif order['action'] == 'support':
       increase_support(order['supporting'])
 
-  for territory in orders:
-    print get_order(territory)
+  ## Find and resolve swap standoffs
+  for territory in orders.copy():
+    order = get_order(territory)
+    if order['action'] == 'move/attack':
+      attacked_territory = order['to']
+      attacked_territory_order = get_order(attacked_territory)
+      if attacked_territory_order and \
+      attacked_territory < territory and \
+      attacked_territory_order['action'] == 'move/attack' and \
+      attacked_territory_order['to'] == territory and \
+      not order['is_convoyed'] and \
+      not attacked_territory_order['is_convoyed']:
+        ## Swap standoff
+        if order['support'] > attacked_territory_order['support']:
+          dislodge_territory(attacked_territory)
+        elif order['support'] < attacked_territory_order['support']:
+          dislodge_territory(territory)
+        else:
+          add_order({'territory': territory, 'action': 'hold', 'support': 1})
+          add_order({'territory': attacked_territory, 'action': 'hold', 'support': 1})
 
-def is_illegal_convoy(order):
+def dislodge_territory(territory):
+  gamestate['dislodged_units'][territory] = get_piece(territory)
+  del gamestate['gameboard'][territory]
+  del gamestate['orders'][territory]
+
+def is_illegal_move(order):
   board = gamestate['gameboard']
   orders = gamestate['orders']
   relevant_convoys = set(filter(lambda x: orders[x]['action'] == 'convoy' and orders[x]['from'] == order['territory'] and orders[x]['to'] == order['to'], gamestate['orders']))
@@ -282,6 +306,16 @@ def is_illegal_convoy(order):
       if space in relevant_convoys:
         queue.append(space)
         relevant_convoys.remove(space)
+  return True
+
+def is_convoyed(order):
+  orders = gamestate['orders']
+  bordering_spaces = get_territory(order['territory'])['borders']
+  if order['to'] not in bordering_spaces:
+    return True
+  relevant_convoys = set(filter(lambda x: orders[x]['action'] == 'convoy' and orders[x]['from'] == order['territory'] and orders[x]['to'] == order['to'], gamestate['orders']))
+  if len(filter(lambda x: x in bordering_spaces, relevant_convoys)) == 0:
+    return False
   return True
   
 def increase_support(territory):
