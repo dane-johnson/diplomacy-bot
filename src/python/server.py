@@ -3,6 +3,7 @@ import sys
 import pickle
 import re
 import requests
+from itertools import groupby
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -19,7 +20,8 @@ gamestate = {
   "orders": {},
   "mode": "pregame",
   "gameboard": gameboard,
-  "dislodged_units": {}
+  "dislodged_units": {},
+  "invalid_retreats": set([])
 }
 
 filename = None
@@ -285,6 +287,26 @@ def resolve_orders():
         else:
           add_order({'territory': territory, 'action': 'hold', 'support': 1})
           add_order({'territory': attacked_territory, 'action': 'hold', 'support': 1})
+  ## Find and resolve move/move standoffs
+  attacked_orders = filter(lambda x: x['action'] == 'move/attack', orders)
+  for _, group in filter(lambda x: len(x[1]) > 1, groupby(attacked_territories, lambda x: x['to'])):
+    for territory in determine_losers(group):
+      add_order({'territory': territory, 'action': 'hold', 'support': 1})
+  ## Loop and resolve move/hold standoffs
+  standoff_found = True
+  while standoff_found:
+    standoff_found = False
+    for territory in orders.copy():
+      order = get_order(territory)
+      if order['action'] == 'move/attack':
+        attacked_territory = order['to']
+        attacked_territory_order = get_order(attacked_territory):
+        if attacked_territory_order and attacked_territory_order['action'] == 'hold':
+          standoff_found = True
+          if order['support'] > attacked_territory_order['support'] and get_piece(attacked_territory).split()[0] != get_piece(territory).split()[0]:
+            dislodge_territory(attacked_territory)
+          else:
+            add_order({'territory': territory, 'action': 'hold', 'support': 1})
 
 def dislodge_territory(territory):
   gamestate['dislodged_units'][territory] = get_piece(territory)
@@ -307,6 +329,14 @@ def is_illegal_move(order):
         queue.append(space)
         relevant_convoys.remove(space)
   return True
+
+def determine_losers(orders):
+  max_support = max(orders, key=lambda x: x['support'])
+  losers = filter(lambda x: x['support'] < max_support, orders)
+  if len(losers) < len(orders) - 1:
+    gamestate["invalid_retreats"].add(orders[1]['to'])
+    return orders
+  return losers
 
 def is_convoyed(order):
   orders = gamestate['orders']
