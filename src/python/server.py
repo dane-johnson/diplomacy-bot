@@ -67,10 +67,20 @@ def parse_order(order):
       order['to'] = support_groups.group(3)
     return order
 
-  convoy_regex = r"(?:fleet)\s([a-z]{3})\sconvoys\s(?:army)\s([a-z]{3})\sto\s([a-z]{3})"
+  convoy_regex = r"fleet\s([a-z]{3})\sconvoys\s(?:army)\s([a-z]{3})\sto\s([a-z]{3})"
   convoy_groups = re.match(convoy_regex, order)
   if convoy_groups:
     return {'action': 'convoy', 'territory': convoy_groups.group(1), 'from': convoy_groups.group(2), 'to': convoy_groups.group(3)}
+
+  disband_regex = r"(?:army|fleet)\s([a-z]{3})\sdisbands"
+  disband_groups = re.match(disband_regex, order)
+  if disband_groups:
+    return {'action': 'disband', 'territory': disband_groups.group(1)}
+
+  retreat_regex = r"(?:fleet|army)\s([a-z]{3})\sretreats\sto\s([a-z]{3})"
+  retreat_groups = re.match(retreat_regex, order)
+  if retreat_groups:
+    return {'action': 'retreat', 'territory': retreat_groups.group(1), 'to': retreat_groups(2)}
 
 def add_order(order):
   ## Find and remove any existing orders for this unit
