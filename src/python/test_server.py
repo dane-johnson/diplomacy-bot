@@ -18,7 +18,8 @@ class ServerTest(unittest.TestCase):
       "orders": {},
       "mode": "pregame",
       "gameboard": gameboard.gameboard,
-      "dislodged_units": {}
+      "dislodged_units": {},
+      "invalid_retreats": set([])
     }
   def test_parse_order(self):
     self.assertEqual(
@@ -73,7 +74,7 @@ class ServerTest(unittest.TestCase):
     server.resolve_orders()
     self.assertEqual(server.gamestate['orders']['bud']['is_convoyed'], False)
 
-  def test_resolve_order_standoff_equal(self):
+  def test_resolve_order_swap_standoff_equal(self):
     server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp"]), "piece": "russia army"},
                                      "stp": {"type": "land", "borders": set(["mos"]), "piece": "germany army"}}
     server.add_order({"territory": "stp", "action": "move/attack", "to": "mos"})
@@ -82,7 +83,7 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(server.gamestate['orders']['stp']['action'], 'hold')
     self.assertEqual(server.gamestate['orders']['mos']['action'], 'hold')
     
-  def test_resolve_order_standoff_unequal(self):
+  def test_resolve_order_swap_standoff_unequal(self):
     server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp", "lvn"]), "piece": "russia army"},
                                      "stp": {"type": "land", "borders": set(["mos", "lvn"]), "piece": "germany army"},
                                      "lvn": {"type": "land", "borders": set(["mos", "stp"]), "piece": "russia army"}}
@@ -95,7 +96,7 @@ class ServerTest(unittest.TestCase):
     self.assertNotIn('stp', server.gamestate['gameboard'])
     self.assertEqual(server.gamestate['dislodged_units']['stp'], "germany army")
 
-  def test_resolve_order_standoff_equal_convoyed(self):
+  def test_resolve_order_swap_standoff_equal_convoyed(self):
     server.gamestate['gameboard'] = {"swe": {"type": "coastal", "borders": set(["fin", "bot"]), "piece": "russia army"},
                                      "fin": {"type": "coastal", "borders": set(["swe", "bot"]), "piece": "germany army"},
                                      "bot": {"type": "water", "borders": set(["swe", "fin"]), "piece": "germany fleet"}}
@@ -106,6 +107,29 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(server.gamestate['orders']['swe']['action'], 'move/attack')
     self.assertEqual(server.gamestate['orders']['fin']['action'], 'move/attack')
 
+  def test_resolve_order_move_move_equal_standoff(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp", "lvn"]), "piece": "russia army"},
+                                     "stp": {"type": "land", "borders": set(["mos", "lvn"]), "piece": "none"},
+                                     "lvn": {"type": "land", "borders": set(["mos", "stp"]), "piece": "germany army"}}
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "stp"})
+    server.add_order({"territory": "lvn", "action": "move/attack", "to": "stp"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['mos']['action'], 'hold')
+    self.assertEqual(server.gamestate['orders']['lvn']['action'], 'hold')
+    self.assertIn('stp', server.gamestate['invalid_retreats'])
+  def test_resolve_order_move_move_unequal_standoff(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp", "lvn", "fin"]), "piece": "russia army"},
+                                     "stp": {"type": "land", "borders": set(["mos", "lvn", "fin"]), "piece": "none"},
+                                     "lvn": {"type": "land", "borders": set(["mos", "stp", "fin"]), "piece": "germany army"},
+                                     "fin": {"type": "land", "borders": set(["mos", "stp", "lvn"]), "piece": "russia army"}}
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "stp"})
+    server.add_order({"territory": "lvn", "action": "move/attack", "to": "stp"})
+    server.add_order({"territory": "fin", "action": "support", "supporting": "mos", "to": "stp"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
+    self.assertEqual(server.gamestate['orders']['lvn']['action'], 'hold')
+    self.assertNotIn('stp', server.gamestate['invalid_retreats'])
+    
 
 if __name__ == "__main__":
   unittest.main()

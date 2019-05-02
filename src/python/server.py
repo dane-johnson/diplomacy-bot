@@ -3,10 +3,10 @@ import sys
 import pickle
 import re
 import requests
-from itertools import groupby
 from dotenv import load_dotenv
 load_dotenv()
 
+from util import group_by
 from gameboard import gameboard, starting_positions
 from image import draw_gameboard
 from interfaces import SlackInterface, CLIInterface, DiscordInterface
@@ -288,10 +288,13 @@ def resolve_orders():
           add_order({'territory': territory, 'action': 'hold', 'support': 1})
           add_order({'territory': attacked_territory, 'action': 'hold', 'support': 1})
   ## Find and resolve move/move standoffs
-  attacked_orders = filter(lambda x: x['action'] == 'move/attack', orders)
-  for _, group in filter(lambda x: len(x[1]) > 1, groupby(attacked_territories, lambda x: x['to'])):
-    for territory in determine_losers(group):
-      add_order({'territory': territory, 'action': 'hold', 'support': 1})
+  attacking_orders = filter(lambda x: x['action'] == 'move/attack', orders.values())
+  for group in filter(lambda x: len(x) > 1, group_by(attacking_orders, 'to')):
+    losers = determine_losers(group)
+    for order in losers:
+      add_order({'territory': order['territory'], 'action': 'hold', 'support': 1})
+    if len(losers) == len(group):
+      gamestate['invalid_retreats'].add(group[0]['to'])
   ## Loop and resolve move/hold standoffs
   standoff_found = True
   while standoff_found:
@@ -300,7 +303,7 @@ def resolve_orders():
       order = get_order(territory)
       if order['action'] == 'move/attack':
         attacked_territory = order['to']
-        attacked_territory_order = get_order(attacked_territory):
+        attacked_territory_order = get_order(attacked_territory)
         if attacked_territory_order and attacked_territory_order['action'] == 'hold':
           standoff_found = True
           if order['support'] > attacked_territory_order['support'] and get_piece(attacked_territory).split()[0] != get_piece(territory).split()[0]:
@@ -331,7 +334,7 @@ def is_illegal_move(order):
   return True
 
 def determine_losers(orders):
-  max_support = max(orders, key=lambda x: x['support'])
+  max_support = max(orders, key=lambda x: x['support'])['support']
   losers = filter(lambda x: x['support'] < max_support, orders)
   if len(losers) < len(orders) - 1:
     gamestate["invalid_retreats"].add(orders[1]['to'])
