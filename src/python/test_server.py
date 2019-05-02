@@ -129,7 +129,52 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
     self.assertEqual(server.gamestate['orders']['lvn']['action'], 'hold')
     self.assertNotIn('stp', server.gamestate['invalid_retreats'])
-    
-
+  def test_resolve_order_move_hold_equal_standoff(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["lvn"]), "piece": "russia army"},
+                                     "lvn": {"type": "land", "borders": set(["mos"]), "piece": "germany army"}}
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "lvn"})
+    server.add_order({"territory": "lvn", "action": "hold"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['mos']['action'], 'hold')
+    self.assertNotIn('lvn', server.gamestate['dislodged_units'])
+  def test_resolve_order_move_hold_move_favored_standoff(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["lvn", "fin"]), "piece": "russia army"},
+                                     "lvn": {"type": "land", "borders": set(["mos", "fin"]), "piece": "germany army"},
+                                     "fin": {"type": "land", "borders": set(["mos", "lvn"]), "piece": "russia army"}}
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "lvn"})
+    server.add_order({"territory": "lvn", "action": "hold"})
+    server.add_order({"territory": "fin", "action": "support", "supporting": "mos", "to": "lvn"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
+    self.assertEqual(server.gamestate['dislodged_units']['lvn'], 'germany army')
+    self.assertNotIn('lvn', server.gamestate['orders'])
+  def test_resolve_order_traffic_backup_hold_favored_standoff(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp", "lvn", "fin"]), "piece": "russia army"},
+                                     "stp": {"type": "land", "borders": set(["mos", "lvn", "fin"]), "piece": "france army"},
+                                     "lvn": {"type": "land", "borders": set(["mos", "stp", "fin"]), "piece": "germany army"},
+                                     "fin": {"type": "land", "borders": set(["mos", "stp", "lvn"]), "piece": "russia army"}}
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "lvn"})
+    server.add_order({"territory": "stp", "action": "hold"})
+    server.add_order({"territory": "fin", "action": "support", "supporting": "mos", "to": "lvn"})
+    server.add_order({"territory": "lvn", "action": "move/attack", "to": "stp"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
+    self.assertEqual(server.gamestate['dislodged_units']['lvn'], 'germany army')
+    self.assertEqual(server.gamestate['orders']['stp']['action'], 'hold' )
+    self.assertNotIn('lvn', server.gamestate['orders'])
+  def test_resolve_order_traffic_backup_attack_favored_standoff(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp", "lvn", "fin"]), "piece": "russia army"},
+                                     "stp": {"type": "land", "borders": set(["mos", "lvn", "fin"]), "piece": "france army"},
+                                     "lvn": {"type": "land", "borders": set(["mos", "stp", "fin"]), "piece": "germany army"},
+                                     "fin": {"type": "land", "borders": set(["mos", "stp", "lvn"]), "piece": "russia army"}}
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "lvn"})
+    server.add_order({"territory": "stp", "action": "hold"})
+    server.add_order({"territory": "fin", "action": "support", "supporting": "lvn", "to": "stp"})
+    server.add_order({"territory": "lvn", "action": "move/attack", "to": "stp"})
+    server.resolve_orders()
+    self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
+    self.assertEqual(server.gamestate['dislodged_units']['stp'], 'france army')
+    self.assertEqual(server.gamestate['orders']['lvn']['action'], 'move/attack' )
+    self.assertNotIn('stp', server.gamestate['orders'])    
 if __name__ == "__main__":
   unittest.main()

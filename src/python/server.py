@@ -308,6 +308,7 @@ def resolve_orders():
           standoff_found = True
           if order['support'] > attacked_territory_order['support'] and get_piece(attacked_territory).split()[0] != get_piece(territory).split()[0]:
             dislodge_territory(attacked_territory)
+            break ## Can't keep iterating over orders because it has been modified TODO find a better way to do this
           else:
             add_order({'territory': territory, 'action': 'hold', 'support': 1})
 
