@@ -175,6 +175,7 @@ def handle_in_channel_message(event):
   if end_groups:
     resolve_orders()
     update_territories()
+    
 
   if filename:
     save_gamestate()
@@ -282,9 +283,9 @@ def resolve_orders():
       not attacked_territory_order['is_convoyed']:
         ## Swap standoff
         if order['support'] > attacked_territory_order['support']:
-          dislodge_territory(attacked_territory)
+          dislodge_territory(attacked_territory, territory)
         elif order['support'] < attacked_territory_order['support']:
-          dislodge_territory(territory)
+          dislodge_territory(territory, attacked_territory)
         else:
           add_order({'territory': territory, 'action': 'hold', 'support': 1})
           add_order({'territory': attacked_territory, 'action': 'hold', 'support': 1})
@@ -308,7 +309,7 @@ def resolve_orders():
         if attacked_territory_order and attacked_territory_order['action'] == 'hold':
           standoff_found = True
           if order['support'] > attacked_territory_order['support'] and get_piece(attacked_territory).split()[0] != get_piece(territory).split()[0]:
-            dislodge_territory(attacked_territory)
+            dislodge_territory(attacked_territory, territory)
             break ## Can't keep iterating over orders because it has been modified TODO find a better way to do this
           else:
             add_order({'territory': territory, 'action': 'hold', 'support': 1})
@@ -324,8 +325,8 @@ def update_territories():
   for territory, piece in new_placements:
     add_piece(piece, territory)
 
-def dislodge_territory(territory):
-  gamestate['dislodged_units'][territory] = get_piece(territory)
+def dislodge_territory(territory, attacker_origin):
+  gamestate['dislodged_units'][territory] = (get_piece(territory), attacker_origin)
   del gamestate['gameboard'][territory]
   del gamestate['orders'][territory]
 

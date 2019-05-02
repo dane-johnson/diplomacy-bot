@@ -94,7 +94,7 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
     self.assertNotIn('stp', server.gamestate['orders'])
     self.assertNotIn('stp', server.gamestate['gameboard'])
-    self.assertEqual(server.gamestate['dislodged_units']['stp'], "germany army")
+    self.assertEqual(server.gamestate['dislodged_units']['stp'], ("germany army", "mos"))
 
   def test_resolve_order_swap_standoff_equal_convoyed(self):
     server.gamestate['gameboard'] = {"swe": {"type": "coastal", "borders": set(["fin", "bot"]), "piece": "russia army"},
@@ -146,7 +146,7 @@ class ServerTest(unittest.TestCase):
     server.add_order({"territory": "fin", "action": "support", "supporting": "mos", "to": "lvn"})
     server.resolve_orders()
     self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
-    self.assertEqual(server.gamestate['dislodged_units']['lvn'], 'germany army')
+    self.assertEqual(server.gamestate['dislodged_units']['lvn'], ('germany army', 'mos'))
     self.assertNotIn('lvn', server.gamestate['orders'])
   def test_resolve_order_traffic_backup_hold_favored_standoff(self):
     server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp", "lvn", "fin"]), "piece": "russia army"},
@@ -159,7 +159,7 @@ class ServerTest(unittest.TestCase):
     server.add_order({"territory": "lvn", "action": "move/attack", "to": "stp"})
     server.resolve_orders()
     self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
-    self.assertEqual(server.gamestate['dislodged_units']['lvn'], 'germany army')
+    self.assertEqual(server.gamestate['dislodged_units']['lvn'], ('germany army', 'mos'))
     self.assertEqual(server.gamestate['orders']['stp']['action'], 'hold' )
     self.assertNotIn('lvn', server.gamestate['orders'])
   def test_resolve_order_traffic_backup_attack_favored_standoff(self):
@@ -173,8 +173,8 @@ class ServerTest(unittest.TestCase):
     server.add_order({"territory": "lvn", "action": "move/attack", "to": "stp"})
     server.resolve_orders()
     self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
-    self.assertEqual(server.gamestate['dislodged_units']['stp'], 'france army')
-    self.assertEqual(server.gamestate['orders']['lvn']['action'], 'move/attack' )
+    self.assertEqual(server.gamestate['dislodged_units']['stp'], ('france army', 'lvn'))
+    self.assertEqual(server.gamestate['orders']['lvn']['action'], 'move/attack')
     self.assertNotIn('stp', server.gamestate['orders'])    
 if __name__ == "__main__":
   unittest.main()
