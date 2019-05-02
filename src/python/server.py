@@ -174,6 +174,7 @@ def handle_in_channel_message(event):
   end_groups = re.search(end_regex, event['text'].lower())
   if end_groups:
     resolve_orders()
+    update_territories()
 
   if filename:
     save_gamestate()
@@ -311,6 +312,17 @@ def resolve_orders():
             break ## Can't keep iterating over orders because it has been modified TODO find a better way to do this
           else:
             add_order({'territory': territory, 'action': 'hold', 'support': 1})
+
+def update_territories():
+  attacking_orders = filter(lambda x: x['action'] == 'attack/move', gamestate['orders'].values())
+  new_placements = []
+  ## Remove moving pieces, record where they are going
+  for order in attacking_orders:
+    new_placements.append((order['territory'], get_piece(order['territory'])))
+    remove_piece(order['territory'])
+  ## Add back moved pieces
+  for territory, piece in new_placements:
+    add_piece(piece, territory)
 
 def dislodge_territory(territory):
   gamestate['dislodged_units'][territory] = get_piece(territory)
