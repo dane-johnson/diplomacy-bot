@@ -324,12 +324,25 @@ def resolve_orders():
           else:
             add_order({'territory': territory, 'action': 'hold', 'support': 1})
 
+def resolve_retreat_orders():
+  retreats = filter(lambda x: x['action'] == 'retreat', gamestate['retreat_orders'].values())
+  groups = group_by(retreats, 'to')
+  for group in filter(lambda x: len(x) == 1, groups):
+    [valid_retreat] = group
+    territory = valid_retreat['territory']
+    piece = gamestate['dislodged_units'][territory][0]
+    add_piece(piece, territory)
+
+def create_retreat_orders():
+  for territory in gamestate['dislodged_units']:
+    add_retreat_order({'action': 'disband', 'territory': territory})
+
 def update_territories():
-  attacking_orders = filter(lambda x: x['action'] == 'attack/move', gamestate['orders'].values())
+  attacking_orders = filter(lambda x: x['action'] == 'move/attack', gamestate['orders'].values())
   new_placements = []
   ## Remove moving pieces, record where they are going
   for order in attacking_orders:
-    new_placements.append((order['territory'], get_piece(order['territory'])))
+    new_placements.append((order['to'], get_piece(order['territory'])))
     remove_piece(order['territory'])
   ## Add back moved pieces
   for territory, piece in new_placements:

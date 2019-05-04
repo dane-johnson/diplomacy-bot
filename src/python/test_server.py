@@ -175,6 +175,13 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
     self.assertEqual(server.gamestate['dislodged_units']['stp'], ('france army', 'lvn'))
     self.assertEqual(server.gamestate['orders']['lvn']['action'], 'move/attack')
-    self.assertNotIn('stp', server.gamestate['orders'])    
+    self.assertNotIn('stp', server.gamestate['orders'])
+  def test_update_territories(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["lvn"]), "piece": "russia army"},
+                                     "lvn": {"type": "land", "borders": set(["mos"]), "piece": "none"}}
+    server.add_order({"territory": "mos", "action": "move/attack", "to": "lvn"})
+    server.update_territories()
+    self.assertEqual(server.gamestate['gameboard']['lvn']['piece'], 'russia army')
+    self.assertEqual(server.gamestate['gameboard']['mos']['piece'], 'none')
 if __name__ == "__main__":
   unittest.main()
