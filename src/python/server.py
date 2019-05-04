@@ -67,7 +67,7 @@ def parse_order(order):
       order['to'] = support_groups.group(3)
     return order
 
-  convoy_regex = r"fleet\s([a-z]{3})\sconvoys\s(?:army)\s([a-z]{3})\sto\s([a-z]{3})"
+  convoy_regex = r"fleet\s([a-z]{3})\sconvoys\sarmy\s([a-z]{3})\sto\s([a-z]{3})"
   convoy_groups = re.match(convoy_regex, order)
   if convoy_groups:
     return {'action': 'convoy', 'territory': convoy_groups.group(1), 'from': convoy_groups.group(2), 'to': convoy_groups.group(3)}
