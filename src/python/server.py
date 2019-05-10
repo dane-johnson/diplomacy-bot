@@ -32,17 +32,20 @@ def handle_event(event):
   elif event["type"] == 'message':
     order = parse_order(event['text'])
     if order:
-      if gamestate['mode'] == 'active':
+      if gamestate['mode'] == get_order_mode(order):
         error = order_error(order, event['user'])
         if not error:
           send_message_im("Order Recieved!", event["channel"])
-          add_order(order)
+          if gamestate['mode'] == 'active':
+            add_order(order)
+          else:
+            add_retreat_order(order)
           if filename:
             save_gamestate()
         else:
           send_message_im(error, event["channel"])
       else:
-        send_message_im("Wait to send orders until the game is started!", event['channel'])
+        send_message_im("You can't send that order now!", event['channel'])
     else:
       send_message_im("I don't know what you mean!", event["channel"])
 
@@ -91,6 +94,11 @@ def add_order(order):
 def get_order(space):
   if space in gamestate['orders']: return gamestate['orders'][space]
   else: return None
+
+def add_retreat_order(order):
+  if order['territory'] in gamestate['retreat_orders']:
+    del gamestate['retreat_order'][order['territory']]
+  gamestate['orders'][order['territory']] = order
 
 def order_error(order, user):
   board = gamestate['gameboard']
@@ -183,12 +191,32 @@ def handle_in_channel_message(event):
   end_regex = r"end$"
   end_groups = re.search(end_regex, event['text'].lower())
   if end_groups:
-    resolve_orders()
-    update_territories()
-    
+    if gamestate['mode'] == 'active':
+      end_active_mode()
+    else:
+      end_retreat_mode()
 
   if filename:
     save_gamestate()
+
+def end_active_mode():
+  resolve_orders()
+  update_territories()
+  create_retreat_orders()
+  gamestate['mode'] = 'retreat'
+  send_message_channel('Retreat!')
+
+def end_retreat_mode():
+  resolve_retreat_orders()
+  gamestate['mode'] = 'active'
+  new_round()
+  send_message_channel('Place your orders!')
+
+def get_order_mode(order):
+  if order['action'] in frozenset(['retreat', 'disband']):
+    return 'retreat'
+  if order['action'] in frozenset(['move/attack', 'hold', 'convoy', 'support']):
+    return 'active'
 
 def print_factions():
   string = ""
@@ -198,6 +226,17 @@ def print_factions():
       string += "<@%s>, " % player
     string += "\n"
   return string
+
+def print_retreats():
+  displacement_map = {faction: [] for faction in FACTIONS}
+  for territory in gamestate['dislodged_units']:
+    (piece, attacking_territory) = gamestate['dislodged_units'][territory]
+    [faction, unit] = piece
+    displacement_map[faction].append((territory, unit, attacking_territory))
+  for faction in displacement_map:
+    print "%s:" % faction
+    for territory, unit, attacking_territory in displacement_map(faction):
+      print "%s displaced from %s by unit at %s" % (unit, territory, attacking_territory)
 
 def get_all_players():
   return reduce(lambda x, y: x | y, gamestate['players'].values())
@@ -246,8 +285,12 @@ def new_round():
   else:
     gamestate['season'] = 'fall'
   ## Every piece holds by default
+  gamestate['orders'] = {}
   for territory in filter(lambda x: gamestate['gameboard'][x]['piece'] != 'none', gamestate['gameboard']):
     add_order({'action': 'hold', 'territory': territory})
+  gamestate['retreat_orders'] = {}
+  gamestate['dislodged_units'] = {}
+  gamestate['invalid_retreats'] = set([])
 
 def resolve_orders():
   board = gamestate['gameboard']
