@@ -192,6 +192,30 @@ def get_order_mode(order):
   if order['action'] in frozenset(['move/attack', 'hold', 'convoy', 'support']):
     return 'active'
 
+
+#################### PRINT ####################
+
+def print_factions():
+  string = ""
+  for faction in FACTIONS:
+    string += "%s: " % faction
+    for player in gamestate['players'][faction]:
+      string += "<@%s>, " % player
+    string += "\n"
+  return string
+
+def print_retreats():
+  displacement_map = {faction: [] for faction in FACTIONS}
+  for territory in gamestate['dislodged_units']:
+    (piece, attacking_territory) = gamestate['dislodged_units'][territory]
+    [faction, unit] = piece
+    displacement_map[faction].append((territory, unit, attacking_territory))
+  for faction in displacement_map:
+    print "%s:" % faction
+    for territory, unit, attacking_territory in displacement_map(faction):
+      print "%s displaced from %s by unit at %s" % (unit, territory, attacking_territory)
+
+
 #################### GETTERS/SETTERS/MUTATORS ####################
 
 def add_order(order):
@@ -208,6 +232,10 @@ def add_retreat_order(order):
   if order['territory'] in gamestate['retreat_orders']:
     del gamestate['retreat_order'][order['territory']]
   gamestate['orders'][order['territory']] = order
+
+def create_retreat_orders():
+  for territory in gamestate['dislodged_units']:
+    add_retreat_order({'action': 'disband', 'territory': territory})
 
 def add_piece(piece, territory):
   gamestate['gameboard'][territory]['piece'] = piece
@@ -300,26 +328,6 @@ def end_retreat_mode():
   gamestate['mode'] = 'active'
   new_round()
   send_message_channel('Place your orders!')
-
-def print_factions():
-  string = ""
-  for faction in FACTIONS:
-    string += "%s: " % faction
-    for player in gamestate['players'][faction]:
-      string += "<@%s>, " % player
-    string += "\n"
-  return string
-
-def print_retreats():
-  displacement_map = {faction: [] for faction in FACTIONS}
-  for territory in gamestate['dislodged_units']:
-    (piece, attacking_territory) = gamestate['dislodged_units'][territory]
-    [faction, unit] = piece
-    displacement_map[faction].append((territory, unit, attacking_territory))
-  for faction in displacement_map:
-    print "%s:" % faction
-    for territory, unit, attacking_territory in displacement_map(faction):
-      print "%s displaced from %s by unit at %s" % (unit, territory, attacking_territory)
 
 def start_game():
   global gamestate
@@ -430,10 +438,6 @@ def resolve_retreat_orders():
     territory = valid_retreat['territory']
     piece = gamestate['dislodged_units'][territory][0]
     add_piece(piece, territory)
-
-def create_retreat_orders():
-  for territory in gamestate['dislodged_units']:
-    add_retreat_order({'action': 'disband', 'territory': territory})
 
 def update_territories():
   attacking_orders = filter(lambda x: x['action'] == 'move/attack', gamestate['orders'].values())
