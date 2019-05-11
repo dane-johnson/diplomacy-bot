@@ -19,7 +19,8 @@ class ServerTest(unittest.TestCase):
       "mode": "pregame",
       "gameboard": gameboard.gameboard,
       "dislodged_units": {},
-      "invalid_retreats": set([])
+      "invalid_retreats": set([]),
+      "retreat_orders": {}
     }
   def test_parse_order(self):
     self.assertEqual(
@@ -183,5 +184,13 @@ class ServerTest(unittest.TestCase):
     server.update_territories()
     self.assertEqual(server.gamestate['gameboard']['lvn']['piece'], 'russia army')
     self.assertEqual(server.gamestate['gameboard']['mos']['piece'], 'none')
+  def test_resolve_retreat_orders_no_conflicts(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["lvn", "fin"]), "piece": "russia army"},
+                                     "lvn": {"type": "land", "borders": set(["mos", "fin"]), "piece": "none"},
+                                     "fin": {"type": "land", "borders": set(["mos", "lvn"]), "piece": "none"}}
+    server.gamestate['dislodged_units'] = {"lvn": ("germany army", "mos")}
+    server.add_retreat_order({'territory': 'lvn', 'action': 'retreat', 'to': 'fin'})
+    server.resolve_retreat_orders()
+    self.assertEqual(server.gamestate['gameboard']['fin']['piece'], 'germany army')
 if __name__ == "__main__":
   unittest.main()

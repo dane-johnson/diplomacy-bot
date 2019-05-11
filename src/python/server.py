@@ -12,7 +12,7 @@ from image import draw_gameboard
 from interfaces import SlackInterface, CLIInterface, DiscordInterface
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
-MODES = frozenset(["pregame", "active"])
+MODES = frozenset(["pregame", "active", 'retreat'])
 
 gamestate = {
   "players": {},
@@ -147,19 +147,25 @@ def parse_order(order):
   retreat_regex = r"(?:fleet|army)\s([a-z]{3})\sretreats\sto\s([a-z]{3})"
   retreat_groups = re.match(retreat_regex, order)
   if retreat_groups:
-    return {'action': 'retreat', 'territory': retreat_groups.group(1), 'to': retreat_groups(2)}
+    return {'action': 'retreat', 'territory': retreat_groups.group(1), 'to': retreat_groups.group(2)}
 
 def order_error(order, user):
   board = gamestate['gameboard']
   territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'supporting'])
+  dislodged_units = gamestate['dislodged_units']
   for territory in territories_in_order:
     ## Make sure territory/to/from/supports is on the board
     if territory and territory not in gamestate['gameboard']:
       return "Territory %s is not valid" % territory
   ## Make sure the user can control this army/navy
-  if gamestate['gameboard'][order['territory']]['piece'].split()[0] != get_faction(user):
-    return "%s does not control %s" % (get_faction(user), order['territory'])
-  piece = get_piece(order['territory'])
+  if gamestate['mode'] == 'active':
+    if gamestate['gameboard'][order['territory']]['piece'].split()[0] != get_faction(user):
+      return "%s does not control %s" % (get_faction(user), order['territory'])
+    piece = get_piece(order['territory'])
+  else:
+    if gamestate['dislodged_units'][order['territory']][0].split()[0] != get_faction(user):
+      return "%s does not control the unit dislodged from %s" % (get_faction(user), order['territory'])
+    piece = dislodged_units[order['territory']][0]
   if order['action'] == 'convoy':
     if piece.split()[1] == 'army':
       return "You may not order an army to convoy"
@@ -189,6 +195,25 @@ def order_error(order, user):
       return "A fleet cannot support a land territory"
     if board[order['to']]['type'] == 'water' and piece.split()[1] == 'army':
       return "An army cannot support a water territory"
+  if order['action'] == 'retreat':
+    # Don't allow retreating to occupied spaces
+    if board[order['to']]['piece'] != 'none':
+      return "You cannot retreat to %s because there is already a unit there" % order['to']
+    # Don't allow retreating to non-adjacent spaces
+    if order['to'] not in board[order['territory']]['borders']:
+      return "You cannot retreat to a spaces that is not adjacent to %s" % order['territory']
+    # Don't allow armies to retreat to water spaces
+    if board[order['to']]['type'] == 'water' and piece.split()[1] == 'army':
+      return "An army cannot retreat to a water space"
+    # Don't allow fleets to retreat to land spaces
+    if board[order['to']]['type'] == 'army' and piece.split()[1] == 'fleet':
+      return "A fleet cannot retreat to a land space"
+    # Don't allow retreating to the space where the attack came from
+    if order['to'] == dislodged_units[order['territory']][1]:
+      return "You cannot retreat to %s because you were attacked from there" % order['territory']
+    # Don't allow retreating to spaces left open by standoffs
+    if order['to'] in gamestate['invalid_retreat']:
+      return "You cannot retreat to %s because it was left vacant by a standoff" % order['territory']
   return None
 
 def get_order_mode(order):
@@ -239,7 +264,7 @@ def get_order(space):
 def add_retreat_order(order):
   if order['territory'] in gamestate['retreat_orders']:
     del gamestate['retreat_order'][order['territory']]
-  gamestate['orders'][order['territory']] = order
+  gamestate['retreat_orders'][order['territory']] = order
 
 def create_retreat_orders():
   for territory in gamestate['dislodged_units']:
@@ -444,8 +469,9 @@ def resolve_retreat_orders():
   for group in filter(lambda x: len(x) == 1, groups):
     [valid_retreat] = group
     territory = valid_retreat['territory']
+    to = valid_retreat['to']
     piece = gamestate['dislodged_units'][territory][0]
-    add_piece(piece, territory)
+    add_piece(piece, to)
 
 def update_territories():
   attacking_orders = filter(lambda x: x['action'] == 'move/attack', gamestate['orders'].values())

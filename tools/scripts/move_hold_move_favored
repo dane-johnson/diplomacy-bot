@@ -4,5 +4,10 @@ army mos to lvn
 fleet stp supports army mos to lvn
 app_mention
 end
+display retreats
+ge
+army lvn retreats to pru
+app_mention
+end
 display board
 display retreats
