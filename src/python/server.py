@@ -212,7 +212,7 @@ def order_error(order, user):
     if order['to'] == dislodged_units[order['territory']][1]:
       return "You cannot retreat to %s because you were attacked from there" % order['territory']
     # Don't allow retreating to spaces left open by standoffs
-    if order['to'] in gamestate['invalid_retreat']:
+    if order['to'] in gamestate['invalid_retreats']:
       return "You cannot retreat to %s because it was left vacant by a standoff" % order['territory']
   return None
 
@@ -263,7 +263,7 @@ def get_order(space):
 
 def add_retreat_order(order):
   if order['territory'] in gamestate['retreat_orders']:
-    del gamestate['retreat_order'][order['territory']]
+    del gamestate['retreat_orders'][order['territory']]
   gamestate['retreat_orders'][order['territory']] = order
 
 def create_retreat_orders():
