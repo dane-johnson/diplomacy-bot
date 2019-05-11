@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+import requests
+import sys
+import json
+
+factions = ["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"]
+
+def main():
+  if len(sys.argv) != 3:
+    print "Usage: %s url scriptfile" % sys.argv[0]
+    quit()
+  global url
+  script_file = sys.argv[2]
+  url = sys.argv[1]
+  fin = open(script_file, 'r')
+  user = 'app_mention'
+  setup_game()
+  lines = fin.readlines()
+  for line in lines:
+    line = line.strip()
+    if line in frozenset(map(lambda x: x[:2], factions) + ['app_mention']):
+      user = line
+    else:
+      send_user_message(line, user)
+
+def send_message(data):
+  requests.post(url, data=json.dumps({'event': data}), headers={'Content-type': 'application/json'})
+
+def send_user_message(text, user="app_mention"):
+  send_message({'type': 'app_mention' if user == "app_mention" else "message", 'user': user, 'text': text, 'channel': 'channel-%s' % user})
+
+def setup_game():
+  for faction in factions:
+    data = {'type': 'app_mention', 'text': 'register %s' % faction, 'user': faction[:2]}
+    send_message(data)
+  data = {'type': 'app_mention', 'text': 'start game'}
+  send_message(data)
+
+if __name__ == "__main__":
+  main()
