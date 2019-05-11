@@ -192,5 +192,17 @@ class ServerTest(unittest.TestCase):
     server.add_retreat_order({'territory': 'lvn', 'action': 'retreat', 'to': 'fin'})
     server.resolve_retreat_orders()
     self.assertEqual(server.gamestate['gameboard']['fin']['piece'], 'germany army')
+  def test_resolve_retreat_orders_conflict(self):
+    server.gamestate['gameboard'] = {"mos": {"type": "land", "borders": set(["stp", "lvn", "fin", "pru"]), "piece": "russia army"},
+                                     "stp": {"type": "land", "borders": set(["mos", "lvn", "fin", "pru"]), "piece": "none"},
+                                     "lvn": {"type": "land", "borders": set(["mos", "stp", "fin", "pru"]), "piece": "none"},
+                                     "fin": {"type": "land", "borders": set(["mos", "stp", "lvn", "pru"]), "piece": "none"},
+                                     "pru": {"type": "land", "borders": set(["mos", "stp", "lvn", "fin"]), "piece": "russia army"}}
+    server.gamestate['dislodged_units'] = {"lvn": ("germany army", "mos"),
+                                           "stp": ("france army", "pru")}
+    server.add_retreat_order({'territory': 'lvn', 'action': 'retreat', 'to': 'fin'})
+    server.add_retreat_order({'territory': 'stp', 'action': 'retreat', 'to': 'fin'})
+    server.resolve_retreat_orders()
+    self.assertEqual(server.gamestate['gameboard']['fin']['piece'], 'none')
 if __name__ == "__main__":
   unittest.main()
