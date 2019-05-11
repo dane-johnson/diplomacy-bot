@@ -1,5 +1,5 @@
 import json
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ARMY_SIZE = (20, 15)
 FLEET_SIZE = (20, 15)
@@ -37,6 +37,11 @@ def add_piece(gameboard, piece_name, space, faction):
   coords = get_pos(space)
   gameboard.paste(piece, coords, mask=piece_mask)
 
+def add_name(gameboard_image, space):
+  d = ImageDraw.Draw(gameboard_image)
+  coords = get_pos(space)[:2]
+  d.text(coords, space, fill=(0, 0, 0, 255))
+
 def get_piece_color(piece_name, rgb):
   r, g, b = rgb
   if piece_name == 'army':
@@ -57,6 +62,8 @@ def draw_gameboard(gameboard):
       continue
     [faction, piece_name] = gameboard[space]['piece'].split()
     add_piece(gameboard_image, piece_name, space, faction)
+  for space in gameboard:
+    add_name(gameboard_image, space)
   return gameboard_image
 
 def demo():
