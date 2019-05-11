@@ -38,6 +38,12 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(
       server.parse_order("fleet abc convoys army bcd to cde"),
       {"action": "convoy", "territory": "abc", "from": "bcd", "to": "cde"})
+    self.assertEqual(
+      server.parse_order("army abc retreats to bcd"),
+      {"action": "retreat", "territory": "abc", "to": "bcd"})
+    self.assertEqual(
+      server.parse_order("army abc disbands"),
+      {"action": "disband", "territory": "abc"})
   def test_add_order(self):
     hold_order = {"action": "hold", "territory": "abc"}
     attack_order = {"action": "move/attack", "territory": "abc", "to": "bcd"}
