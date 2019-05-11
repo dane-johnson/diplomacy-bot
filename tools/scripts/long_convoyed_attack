@@ -1,0 +1,12 @@
+amend england fleet at iri, england fleet at mid, england fleet at wes, england fleet at gol, russia army at mar, england army at pie
+en
+army lvp to mar
+fleet iri convoys army lvp to mar
+fleet mid convoys army lvp to mar
+fleet wes convoys army lvp to mar
+fleet gol convoys army lvp to mar
+army pie supports army lvp to mar
+app_mention
+end
+display board
+display retreats

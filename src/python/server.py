@@ -182,7 +182,7 @@ def order_error(order, user):
    ## Don't allow fleets to move to land spaces
    if board[order['to']]['type'] == 'land' and piece.split()[1] == 'fleet':
      return "Cannot move fleet to land space"
-   if piece.split()[1] == 'fleet' and board[order['to']] not in board[order['territory']]['borders']:
+   if piece.split()[1] == 'fleet' and order['to'] not in board[order['territory']]['borders']:
      return "Fleets can only move to adjacent spaces"
    ## Don't allow movement to/from land or water spaces from/to non-adjacent spaces
    if board[order['territory']]['type'] == 'land' and order['to'] not in board[order['territory']]['borders'] or \
