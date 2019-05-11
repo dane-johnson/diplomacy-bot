@@ -40,7 +40,7 @@ def add_piece(gameboard, piece_name, space, faction):
 def add_name(gameboard_image, space):
   d = ImageDraw.Draw(gameboard_image)
   coords = get_pos(space)[:2]
-  d.text(coords, space, fill=(0, 0, 0, 255))
+  d.text(coords, space.upper(), fill=(0, 0, 0, 255))
 
 def get_piece_color(piece_name, rgb):
   r, g, b = rgb
