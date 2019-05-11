@@ -12,7 +12,7 @@ from image import draw_gameboard
 from interfaces import SlackInterface, CLIInterface, DiscordInterface
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
-MODES = frozenset(["pregame", "ingame"])
+MODES = frozenset(["pregame", "active"])
 
 gamestate = {
   "players": {},
@@ -76,6 +76,9 @@ def handle_in_channel_message(event):
     elif item == 'board':
       gameboard_img = draw_gameboard(gamestate['gameboard'])
       send_image_channel(gameboard_img)
+    elif item == 'retreats':
+      retreats_string = print_retreats()
+      send_message_channel(retreats_string)
     else:
       send_message_channel("I don't know what %s is." % item)
 
@@ -91,6 +94,8 @@ def handle_in_channel_message(event):
           remove_piece(territory)
         else:
           add_piece('%s %s' % (faction, piece), territory)
+          if gamestate['mode'] == 'active':
+            add_order({'territory': territory, 'action': 'hold'})
 
   start_regex = r"start"
   start_groups = re.search(start_regex, event['text'].lower())
@@ -205,15 +210,18 @@ def print_factions():
   return string
 
 def print_retreats():
+  string = ""
   displacement_map = {faction: [] for faction in FACTIONS}
   for territory in gamestate['dislodged_units']:
     (piece, attacking_territory) = gamestate['dislodged_units'][territory]
-    [faction, unit] = piece
+    [faction, unit] = piece.split()
     displacement_map[faction].append((territory, unit, attacking_territory))
   for faction in displacement_map:
-    print "%s:" % faction
-    for territory, unit, attacking_territory in displacement_map(faction):
-      print "%s displaced from %s by unit at %s" % (unit, territory, attacking_territory)
+    if len(displacement_map[faction]) > 0:
+      string += '%s: \n' % faction
+      for territory, unit, attacking_territory in displacement_map[faction]:
+        string += "\t%s dislodged from %s by unit at %s\n" % (unit, territory, attacking_territory)
+  return string
 
 
 #################### GETTERS/SETTERS/MUTATORS ####################
@@ -267,7 +275,7 @@ def add_to_faction(faction, player):
 
 def dislodge_territory(territory, attacker_origin):
   gamestate['dislodged_units'][territory] = (get_piece(territory), attacker_origin)
-  del gamestate['gameboard'][territory]
+  gamestate['gameboard'][territory]['piece'] = 'none'
   del gamestate['orders'][territory]
 
 def is_illegal_move(order):

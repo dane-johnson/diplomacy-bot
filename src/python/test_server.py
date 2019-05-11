@@ -93,7 +93,7 @@ class ServerTest(unittest.TestCase):
     server.resolve_orders()
     self.assertEqual(server.gamestate['orders']['mos']['action'], 'move/attack')
     self.assertNotIn('stp', server.gamestate['orders'])
-    self.assertNotIn('stp', server.gamestate['gameboard'])
+    self.assertEqual(server.gamestate['gameboard']['stp']['piece'], 'none')
     self.assertEqual(server.gamestate['dislodged_units']['stp'], ("germany army", "mos"))
 
   def test_resolve_order_swap_standoff_equal_convoyed(self):
