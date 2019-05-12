@@ -13,7 +13,7 @@ from image import draw_gameboard
 from interfaces import SlackInterface, CLIInterface, DiscordInterface
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
-MODES = frozenset(["pregame", "active", 'retreat'])
+MODES = frozenset(["pregame", "active", 'retreat', 'placement'])
 
 gamestate = {
   "players": {},
@@ -359,9 +359,11 @@ def end_active_mode():
 
 def end_retreat_mode():
   resolve_retreat_orders()
-  gamestate['mode'] = 'active'
-  new_round()
-  send_message_channel('Place your orders!')
+  if gamestate['season'] == 'fall':
+    gamestate['mode'] = 'placement'
+  else:
+    gamestate['mode'] = 'active'
+    new_round()
 
 def start_game():
   global gamestate

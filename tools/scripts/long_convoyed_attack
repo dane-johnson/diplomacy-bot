@@ -8,6 +8,11 @@ fleet gol convoys army lvp to mar
 army pie supports army lvp to mar
 app_mention
 end
-display board
 display retreats
+end
+en
+army pie to tus
+app_mention
+end
+display board
 end
