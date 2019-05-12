@@ -4,50 +4,56 @@ import json
 from Tkinter import *
 from PIL import ImageTk 
 
-sys.path.append('src/python')
-from gameboard import gameboard
-
 def main():
-  spaces = gameboard.keys()
   root = Tk()
   if sys.platform.startswith('linux'):
     root.attributes('-type', 'utility')
-  app = App(master=root, spaces_to_choose=spaces)
+  app = App(master=root)
   app.mainloop()
 
 class App(Frame):
-  def __init__(self, master=None, spaces_to_choose=[]):
+  def __init__(self, master=None):
     Frame.__init__(self, master)
     self.pack()
-    self.spaces_to_choose = spaces_to_choose
     self.spaces = {}
+    self.load_spaces()
     self.image = ImageTk.PhotoImage(file='resources/gameboard.png')
-    self.click_directions = StringVar()
-    self.click_directions.set("Choose space for '%s'" % spaces_to_choose[0])
     self.create_widgets()
 
   def create_widgets(self):
-    self.clicklabel = Label(self, textvariable=self.click_directions)
-    self.clicklabel.pack()
-    self.canvas = GameCanvas(self, self.oncanvasclick, self.image, self.spaces)
+    self.controlgroup = Frame(self)
+    self.controlgroup.pack()
+    self.canvas = GameCanvas(self.controlgroup, self.oncanvasclick, self.image, self.spaces)
     self.canvas.paint()
-    self.canvas.pack()
+    self.canvas.grid(row=0, column=0)
+    self.space_selector = Listbox(self.controlgroup)
+    for space in sorted(self.spaces.keys()):
+      self.space_selector.insert(END, space)
+    self.space_selector.grid(row=0, column=1, sticky=N+S)
+
+  def get_selected_space(self):
+    selection = self.space_selector.curselection()
+    if len(selection) == 0:
+      return None
+    else:
+      return sorted(self.spaces.keys())[selection[0]]
 
   def oncanvasclick(self, evt):
-    if len(self.spaces_to_choose) == 0:
+    selected_space = self.get_selected_space()
+    if not selected_space:
       return
-    self.spaces[self.spaces_to_choose[0]] = (evt.x, evt.y)
-    if len(self.spaces_to_choose) == 1:
-      self.click_directions.set("Done!")
-      self.dump_spaces()
-    else:
-      self.click_directions.set("Choose space for '%s'" % self.spaces_to_choose[1])
-    del self.spaces_to_choose[0]
+    self.spaces[selected_space] = (evt.x, evt.y)
     self.canvas.paint()
+    self.dump_spaces()
 
   def dump_spaces(self):
     file = open('resources/standard.json', 'w')
     json.dump(self.spaces, file)
+    file.close()
+
+  def load_spaces(self):
+    file = open('resources/standard.json', 'r')
+    self.spaces = json.load(file)
     file.close()
 
 class GameCanvas(Canvas):
