@@ -150,6 +150,27 @@ def parse_order(order):
   if retreat_groups:
     return {'action': 'retreat', 'territory': retreat_groups.group(1), 'to': retreat_groups.group(2)}
 
+  add_regex = r"add"
+  if re.match(add_regex, order):
+    group_regex = r"(fleet|army) at ([a-z]{3})"
+    matches = re.findall(group_regex, order)
+    groups = []
+    for match in matches:
+      unit, territory = match
+      groups.append((unit, territory))
+    return {'action': 'add', 'groups': groups}
+  
+  remove_regex = r"remove"
+  if re.match(remove_regex, order):
+    group_regex = r"(fleet|army) at ([a-z]{3})"
+    matches = re.findall(group_regex, order)
+    groups = []
+    for match in matches:
+      unit, territory = match
+      groups.append((unit, territory))
+    return {'action': 'remove', 'groups': groups}
+  
+
 def order_error(order, user):
   board = gamestate['gameboard']
   territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'supporting'])
@@ -359,6 +380,8 @@ def get_unit_delta(faction):
   nunits = len(filter(lambda x: x['piece'].split()[0] == faction, gamestate['gameboard'].values()))
   nsupplies = len(filter(lambda x: 'supply' in x and x['supply'] == faction, gamestate['gameboard'].values()))
   return nsupplies - nunits
+def get_home_territories(faction):
+  return frozenset(filter(lambda x: starting_positions[x].split()[0] == faction, starting_positions))
 
 #################### CONTROL ####################
 
