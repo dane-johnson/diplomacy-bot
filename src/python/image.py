@@ -3,11 +3,12 @@ from PIL import Image, ImageDraw
 
 ARMY_SIZE = (15, 15)
 FLEET_SIZE = (15, 15)
-PIECE_X_OFFSET = 0
+PIECE_X_OFFSET = 2
 PIECE_Y_OFFSET = 10
 
-GREEN = (0, 255, 0)
-BLUE = (0, 102, 255)
+SUPPLY_SIZE = 10
+SUPPLY_X_OFFSET = 3
+SUPPLY_Y_OFFSET = -10
 
 _gameboard = Image.open('resources/gameboard.png')
 _army = Image.open('resources/cannon.gif')
@@ -23,7 +24,8 @@ faction_colors = {
   'russia': (255, 176, 5),
   'austria-hungary': (255, 5, 5),
   'turkey': (255, 246, 5),
-  'italy': (10, 255, 46)
+  'italy': (10, 255, 46),
+  'neutral': (168, 157, 161)
 }
 
 def get_pos(space):
@@ -40,6 +42,14 @@ def add_piece(gameboard, piece_name, space, faction):
   x += PIECE_X_OFFSET
   y += PIECE_Y_OFFSET
   gameboard.paste(piece, (x, y), mask=piece_mask)
+
+def add_supply(gameboard_image, space, faction):
+  color = faction_colors[faction]
+  x, y = get_pos(space)
+  x += SUPPLY_X_OFFSET
+  y += SUPPLY_Y_OFFSET
+  d = ImageDraw.Draw(gameboard_image)
+  d.ellipse([x, y, x + SUPPLY_SIZE, y + SUPPLY_SIZE], fill=color)
 
 def add_name(gameboard_image, space):
   d = ImageDraw.Draw(gameboard_image)
@@ -66,6 +76,11 @@ def draw_gameboard(gameboard):
       continue
     [faction, piece_name] = gameboard[space]['piece'].split()
     add_piece(gameboard_image, piece_name, space, faction)
+  for space in gameboard:
+    if 'supply' not in gameboard[space] or gameboard[space]['supply'] == 'none':
+      continue
+    faction = gameboard[space]['supply']
+    add_supply(gameboard_image, space, faction)
   for space in gameboard:
     add_name(gameboard_image, space)
   return gameboard_image
