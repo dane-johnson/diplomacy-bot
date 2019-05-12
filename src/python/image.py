@@ -49,7 +49,7 @@ def add_supply(gameboard_image, space, faction):
   x += SUPPLY_X_OFFSET
   y += SUPPLY_Y_OFFSET
   d = ImageDraw.Draw(gameboard_image)
-  d.ellipse([x, y, x + SUPPLY_SIZE, y + SUPPLY_SIZE], fill=color)
+  d.ellipse([x, y, x + SUPPLY_SIZE, y + SUPPLY_SIZE], fill=color, outline=(0, 0, 0, 255))
 
 def add_name(gameboard_image, space):
   d = ImageDraw.Draw(gameboard_image)
