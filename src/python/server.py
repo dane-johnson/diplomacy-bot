@@ -13,7 +13,7 @@ from image import draw_gameboard
 from interfaces import SlackInterface, CLIInterface, DiscordInterface
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
-MODES = frozenset(["pregame", "active", 'retreat', 'placement'])
+MODES = frozenset(["pregame", "active", 'retreat', 'adjustment'])
 
 gamestate = {
   "players": {},
@@ -249,6 +249,14 @@ def print_retreats():
         string += "\t%s dislodged from %s by unit at %s\n" % (unit, territory, attacking_territory)
   return string
 
+def inform_adjustments():
+  for faction in FACTIONS:
+    for user in gamestate['players'][faction]:
+      delta = get_unit_delta(faction)
+      if delta > 0:
+        send_message_im("You may add %d units" % delta, user)
+      elif delta < 0:
+        send_message_im("You must remove %s units" % -delta, user)
 
 #################### GETTERS/SETTERS/MUTATORS ####################
 
@@ -347,6 +355,10 @@ def determine_losers(orders):
     return orders
   return losers
 
+def get_unit_delta(faction):
+  nunits = len(filter(lambda x: x['piece'].split()[0] == faction, gamestate['gameboard'].values()))
+  nsupplies = len(filter(lambda x: 'supply' in x and x['supply'] == faction, gamestate['gameboard'].values()))
+  return nsupplies - nunits
 
 #################### CONTROL ####################
 
@@ -360,7 +372,8 @@ def end_active_mode():
 def end_retreat_mode():
   resolve_retreat_orders()
   if gamestate['season'] == 'fall':
-    gamestate['mode'] = 'placement'
+    gamestate['mode'] = 'adjustment'
+    inform_adjustments()
   else:
     gamestate['mode'] = 'active'
     new_round()

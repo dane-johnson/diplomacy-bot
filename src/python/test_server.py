@@ -52,6 +52,13 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(server.gamestate['orders'], {"abc": hold_order})
     server.add_order(attack_order)
     self.assertEqual(server.gamestate['orders'], {"abc": attack_order})
+  def test_get_unit_delta_gain(self):
+    server.gamestate['gameboard'] = {"abc": {"type": "land", "supply": "england", "piece": "none"}}
+    self.assertEqual(server.get_unit_delta('england'), 1)
+  def test_get_unit_delta_zero(self):
+    server.gamestate['gameboard'] = {"abc": {"type": "land", "supply": "none", "piece": "england army"}}
+    self.assertEqual(server.get_unit_delta('england'), -1)
+    
   def test_order_error(self):
     server.gamestate['gameboard'] = {"abc": {"type": "land", "borders": []},
                                      "xyz": {"type": "land", "borders": []}}
