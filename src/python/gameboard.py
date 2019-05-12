@@ -47,7 +47,7 @@ gameboard = {
   'war': {'type': 'land', 'supply': 'russia', 'borders': ['pru', 'lvn', 'mos', 'ukr', 'gal', 'sil']},
   'gal': {'type': 'land', 'supply': 'none', 'borders': ['war', 'ukr', 'rum', 'bud', 'vie', 'boh', 'sil']},
   'rum': {'type': 'coastal', 'supply': 'neutral', 'borders': ['ukr', 'sev', 'bla', 'bul', 'ser', 'bud', 'gal']},
-  'con': {'type': 'coastal', 'supply': 'neutral', 'borders': ['bla', 'ank', 'smy', 'aeg', 'bul']},
+  'con': {'type': 'coastal', 'supply': 'turkey', 'borders': ['bla', 'ank', 'smy', 'aeg', 'bul']},
   'bul': {'type': 'coastal', 'supply': 'neutral', 'borders': ['rum', 'bla', 'con', 'aeg', 'gre', 'ser']},
   'ser': {'type': 'land', 'supply': 'neutral', 'borders': ['bud', 'rum', 'bul', 'gre', 'alb', 'tri']},
   'alb': {'type': 'coastal', 'supply': 'none', 'borders': ['ser', 'gre', 'ion', 'adr', 'tri']},
