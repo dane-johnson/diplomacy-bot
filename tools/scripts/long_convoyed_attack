@@ -16,3 +16,7 @@ app_mention
 end
 display board
 end
+en
+remove fleet at gol, fleet at wes, fleet at mid, fleet at iri, fleet at lon
+app_mention
+end

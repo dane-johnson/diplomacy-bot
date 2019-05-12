@@ -23,33 +23,34 @@ class ServerTest(unittest.TestCase):
       "retreat_orders": {}
     }
   def test_parse_order(self):
+    server.add_to_faction('england', 'en')
     self.assertEqual(
-      server.parse_order("army abc holds"),
+      server.parse_order("army abc holds", "en"),
       {"action": "hold", "territory": "abc"})
     self.assertEqual(
-      server.parse_order("army abc to bcd"),
+      server.parse_order("army abc to bcd", "en"),
       {"action": "move/attack", "territory": "abc", "to": "bcd"})
     self.assertEqual(
-      server.parse_order("army abc supports army bcd to cde"),
+      server.parse_order("army abc supports army bcd to cde", "en"),
       {"action": "support", "territory": "abc", "supporting": "bcd", "to": "cde"})
     self.assertEqual(
-      server.parse_order("army abc supports army bcd"),
+      server.parse_order("army abc supports army bcd", "en"),
       {"action": "support", "territory": "abc", "supporting": "bcd"},)
     self.assertEqual(
-      server.parse_order("fleet abc convoys army bcd to cde"),
+      server.parse_order("fleet abc convoys army bcd to cde", "en"),
       {"action": "convoy", "territory": "abc", "from": "bcd", "to": "cde"})
     self.assertEqual(
-      server.parse_order("army abc retreats to bcd"),
+      server.parse_order("army abc retreats to bcd", "en"),
       {"action": "retreat", "territory": "abc", "to": "bcd"})
     self.assertEqual(
-      server.parse_order("army abc disbands"),
+      server.parse_order("army abc disbands", "en"),
       {"action": "disband", "territory": "abc"})
     self.assertEqual(
-      server.parse_order("add army at abc, fleet at bcd"),
-      {"action": "add", "groups": [("army", "abc"), ("fleet", "bcd")]})
+      server.parse_order("add army at abc, fleet at bcd", "en"),
+      {"action": "add", "groups": [("army", "abc"), ("fleet", "bcd")], "faction": "england"})
     self.assertEqual(
-      server.parse_order("remove army at abc, fleet at bcd"),
-      {"action": "remove", "groups": [("army", "abc"), ("fleet", "bcd")]})
+      server.parse_order("remove army at abc, fleet at bcd", "en"),
+      {"action": "remove", "groups": [("army", "abc"), ("fleet", "bcd")], "faction": "england"})
   def test_add_order(self):
     hold_order = {"action": "hold", "territory": "abc"}
     attack_order = {"action": "move/attack", "territory": "abc", "to": "bcd"}

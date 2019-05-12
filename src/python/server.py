@@ -33,7 +33,7 @@ def handle_event(event):
   if event["type"] == 'app_mention':
     handle_in_channel_message(event)
   elif event["type"] == 'message':
-    order = parse_order(event['text'])
+    order = parse_order(event['text'], event['user'])
     if order:
       if gamestate['mode'] == get_order_mode(order):
         error = order_error(order, event['user'])
@@ -108,13 +108,16 @@ def handle_in_channel_message(event):
   if end_groups:
     if gamestate['mode'] == 'active':
       end_active_mode()
-    else:
+    elif gamestate['mode'] == 'retreat':
       end_retreat_mode()
+    elif gamestate['mode'] == 'adjustments':
+      end_adjustments_mode()
 
   if filename:
     save_gamestate()
 
-def parse_order(order):
+def parse_order(order, user):
+  faction = get_faction(user)
   formatted_order = order.strip().lower()
   
   hold_regex = r"(?:army|fleet)\s([a-z]{3})\sholds"
@@ -158,7 +161,7 @@ def parse_order(order):
     for match in matches:
       unit, territory = match
       groups.append((unit, territory))
-    return {'action': 'add', 'groups': groups}
+    return {'action': 'add', 'groups': groups, 'faction': faction}
   
   remove_regex = r"remove"
   if re.match(remove_regex, order):
@@ -168,7 +171,7 @@ def parse_order(order):
     for match in matches:
       unit, territory = match
       groups.append((unit, territory))
-    return {'action': 'remove', 'groups': groups}
+    return {'action': 'remove', 'groups': groups, 'faction': faction}
   
 
 def order_error(order, user):
@@ -400,6 +403,10 @@ def end_retreat_mode():
   else:
     gamestate['mode'] = 'active'
     new_round()
+def end_adjustments_mode():
+  resolve_adjustments_orders()
+  gamestate['mode'] = 'active'
+  new_round()
 
 def start_game():
   global gamestate
@@ -517,6 +524,17 @@ def resolve_retreat_orders():
     piece = gamestate['dislodged_units'][territory][0]
     add_piece(piece, to)
 
+def resolve_adjustments_orders():
+  for order in gamestate['adjustments_orders']:
+    faction = order['faction']
+    groups = order['groups']
+    if order['action'] == 'add':
+      for unit, territory in groups:
+        add_piece("%s %s" % (faction, unit), territory)
+    elif order['action'] == 'remove':
+      for _, territory in groups:
+        remove_piece(territory)
+      
 def update_territories():
   attacking_orders = filter(lambda x: x['action'] == 'move/attack', gamestate['orders'].values())
   new_placements = []
