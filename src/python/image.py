@@ -25,7 +25,7 @@ faction_colors = {
 }
 
 def get_pos(space):
-  return coords[space]
+  return tuple(coords[space]) ## Do not remove, PIL assumes immutable tuples and will modify lists 
 
 def get_gameboard():
   return _gameboard.copy()
@@ -34,13 +34,13 @@ def add_piece(gameboard, piece_name, space, faction):
   color = faction_colors[faction]
   piece = get_piece_color(piece_name, color)
   piece_mask = piece.convert('RGBA')
-  coords = get_pos(space)
-  gameboard.paste(piece, coords, mask=piece_mask)
+  pos = get_pos(space)
+  gameboard.paste(piece, pos, mask=piece_mask)
 
 def add_name(gameboard_image, space):
   d = ImageDraw.Draw(gameboard_image)
-  coords = get_pos(space)[:2]
-  d.text(coords, space.upper(), fill=(0, 0, 0, 255))
+  pos = get_pos(space)
+  d.text(pos, space.upper(), fill=(0, 0, 0, 255))
 
 def get_piece_color(piece_name, rgb):
   r, g, b = rgb
