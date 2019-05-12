@@ -1,8 +1,10 @@
 import json
 from PIL import Image, ImageDraw
 
-ARMY_SIZE = (20, 15)
-FLEET_SIZE = (20, 15)
+ARMY_SIZE = (15, 15)
+FLEET_SIZE = (15, 15)
+PIECE_X_OFFSET = 0
+PIECE_Y_OFFSET = 10
 
 GREEN = (0, 255, 0)
 BLUE = (0, 102, 255)
@@ -34,8 +36,10 @@ def add_piece(gameboard, piece_name, space, faction):
   color = faction_colors[faction]
   piece = get_piece_color(piece_name, color)
   piece_mask = piece.convert('RGBA')
-  pos = get_pos(space)
-  gameboard.paste(piece, pos, mask=piece_mask)
+  x, y = get_pos(space)
+  x += PIECE_X_OFFSET
+  y += PIECE_Y_OFFSET
+  gameboard.paste(piece, (x, y), mask=piece_mask)
 
 def add_name(gameboard_image, space):
   d = ImageDraw.Draw(gameboard_image)
