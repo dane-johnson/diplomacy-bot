@@ -3,6 +3,7 @@ import sys
 import pickle
 import re
 import requests
+from string import capitalize
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -372,14 +373,19 @@ def start_game():
       send_message_channel("These factions have no members: %s" % ", ".join(empty_factions))
     else:
       gamestate['mode'] = 'active'
-      new_round()
       send_message_channel("@here Game on!!!")
+      new_round()
 
 def new_round():
   if 'season' not in gamestate or gamestate['season'] == 'fall':
     gamestate['season'] = 'spring'
+    if 'year' not in gamestate:
+      gamestate['year'] = 1901
+    else:
+      gamestate['year'] += 1
   else:
     gamestate['season'] = 'fall'
+  send_message_channel("%s %d:" % (capitalize(gamestate['season']), gamestate['year']))
   ## Every piece holds by default
   gamestate['orders'] = {}
   for territory in filter(lambda x: gamestate['gameboard'][x]['piece'] != 'none', gamestate['gameboard']):

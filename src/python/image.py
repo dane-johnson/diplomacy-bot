@@ -71,6 +71,7 @@ def get_piece_color(piece_name, rgb):
 
 def draw_gameboard(gameboard):
   gameboard_image = get_gameboard()
+  ## Do this in three steps so overlaps will go space name -> supply marker -> unit
   for space in gameboard:
     if gameboard[space]['piece'] == 'none':
       continue
