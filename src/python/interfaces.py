@@ -77,7 +77,7 @@ class SlackInterface(Interface):
       handle_event(event)
       return "OK"
 
-  def run():
+  def run(self):
     self.app.run('0.0.0.0', port=8080)
 
   @classmethod
