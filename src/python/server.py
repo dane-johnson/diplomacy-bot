@@ -13,7 +13,7 @@ from image import draw_gameboard
 from interfaces import SlackInterface, CLIInterface, DiscordInterface
 
 FACTIONS = frozenset(["austria-hungary", "england", "france", "germany", "italy", "russia", "turkey"])
-MODES = frozenset(["pregame", "active", 'retreat', 'adjustment'])
+MODES = frozenset(["pregame", "active", 'retreat', 'adjustments'])
 
 gamestate = {
   "players": {},
@@ -41,8 +41,10 @@ def handle_event(event):
           send_message_im("Order Recieved!", event["channel"])
           if gamestate['mode'] == 'active':
             add_order(order)
-          else:
+          elif gamestate['mode'] == 'retreat':
             add_retreat_order(order)
+          elif gamestate['mode'] == 'adjustments':
+            add_adjustments_order(order)
           if filename:
             save_gamestate()
         else:
@@ -155,7 +157,7 @@ def parse_order(order, user):
 
   add_regex = r"add"
   if re.match(add_regex, order):
-    group_regex = r"(fleet|army) at ([a-z]{3})"
+    group_regex = r"(fleet|army)\s(?:at\s)([a-z]{3})"
     matches = re.findall(group_regex, order)
     groups = []
     for match in matches:
@@ -165,7 +167,7 @@ def parse_order(order, user):
   
   remove_regex = r"remove"
   if re.match(remove_regex, order):
-    group_regex = r"(fleet|army) at ([a-z]{3})"
+    group_regex = r"(fleet|army)\s(?:at\s)([a-z]{3})"
     matches = re.findall(group_regex, order)
     groups = []
     for match in matches:
@@ -176,7 +178,10 @@ def parse_order(order, user):
 
 def order_error(order, user):
   board = gamestate['gameboard']
-  territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'supporting'])
+  if gamestate['mode'] == 'adjustments':
+    territories_in_order = map(lambda x: x[1], order['groups'])
+  else:
+    territories_in_order = map(lambda x: order.get(x, None), ['territory', 'to', 'from', 'supporting'])
   dislodged_units = gamestate['dislodged_units']
   for territory in territories_in_order:
     ## Make sure territory/to/from/supports is on the board
@@ -187,7 +192,7 @@ def order_error(order, user):
     if gamestate['gameboard'][order['territory']]['piece'].split()[0] != get_faction(user):
       return "%s does not control %s" % (get_faction(user), order['territory'])
     piece = get_piece(order['territory'])
-  else:
+  if gamestate['mode'] == 'retreat':
     if gamestate['dislodged_units'][order['territory']][0].split()[0] != get_faction(user):
       return "%s does not control the unit dislodged from %s" % (get_faction(user), order['territory'])
     piece = dislodged_units[order['territory']][0]
@@ -239,6 +244,36 @@ def order_error(order, user):
     # Don't allow retreating to spaces left open by standoffs
     if order['to'] in gamestate['invalid_retreats']:
       return "You cannot retreat to %s because it was left vacant by a standoff" % order['territory']
+  if order['action'] == 'add':
+    faction = order['faction']
+    for unit, territory in order['groups']:
+      # Don't allow adding to non-supply territories
+      if 'supply' not in gameboard[territory] or gameboard[territory]['supply'] == 'none':
+        return "%s is not a supply center" % territory
+      # Don't allow adding at occupied spaces
+      if get_piece(territory) != 'none':
+        return "You cannot add at %s because it is already occupied" % territory
+      # Don't allow adding at spaces that you do not control
+      if territory not in get_home_territories(faction) or gameboard[territory]['supply'] != faction:
+        return "%s is not one of your controlled home territories" % territory
+      # Don't allow adding fleets to land spaces
+      if unit == 'fleet' and gameboard[territory]['type'] == 'land':
+        return "Cannot add a fleet to a non-coastal city"
+    # Don't allow more adds than the delta
+    if len(order['groups']) > get_unit_delta(order['faction']):
+      return "You can only add up to %d units" % get_unit_delta(order['faction'])
+  if order['action'] == 'remove':
+    faction = order['faction']
+    for unit, territory in order['groups']:
+      # Don't allow removal of an empty space
+      if gameboard[territory]['piece'] == 'none':
+        return "You cannot remove %s as it is empty" % territory
+      # Don't allow removal from another faction
+      if gameboard[territory]['piece'].split()[0] != faction:
+        return "You cannot remove %s as it is controlled by another faction" % territory
+    # Don't allow any more or less removals than the delta
+    if len(order['groups']) != -get_unit_delta(order['faction']):
+      return "You must remove exactly %d units" % -get_unit_delta(order['faction'])
   return None
 
 def get_order_mode(order):
@@ -246,6 +281,8 @@ def get_order_mode(order):
     return 'retreat'
   if order['action'] in frozenset(['move/attack', 'hold', 'convoy', 'support']):
     return 'active'
+  if order['action'] in frozenset(['add', 'remove']):
+    return 'adjustments'
 
 
 #################### PRINT ####################
@@ -298,7 +335,10 @@ def add_retreat_order(order):
   if order['territory'] in gamestate['retreat_orders']:
     del gamestate['retreat_orders'][order['territory']]
   gamestate['retreat_orders'][order['territory']] = order
-
+def add_adjustments_order(order):
+  if order['faction'] in gamestate['adjustments_orders']:
+    del gamestate['adjustments_orders'][order['faction']]
+  gamestate['adjustments_orders'][order['faction']] = order
 def create_retreat_orders():
   for territory in gamestate['dislodged_units']:
     add_retreat_order({'action': 'disband', 'territory': territory})
@@ -379,9 +419,11 @@ def determine_losers(orders):
     return orders
   return losers
 
+def count_supply_centers(faction):
+  return len(filter(lambda x: 'supply' in x and x['supply'] == faction, gamestate['gameboard'].values()))
 def get_unit_delta(faction):
   nunits = len(filter(lambda x: x['piece'].split()[0] == faction, gamestate['gameboard'].values()))
-  nsupplies = len(filter(lambda x: 'supply' in x and x['supply'] == faction, gamestate['gameboard'].values()))
+  nsupplies = count_supply_centers(faction)
   return nsupplies - nunits
 def get_home_territories(faction):
   return frozenset(filter(lambda x: starting_positions[x].split()[0] == faction, starting_positions))
@@ -394,32 +436,43 @@ def end_active_mode():
   create_retreat_orders()
   gamestate['mode'] = 'retreat'
   send_message_channel('Retreat!')
+  send_message_channel(print_retreats())
 
 def end_retreat_mode():
   resolve_retreat_orders()
   if gamestate['season'] == 'fall':
-    gamestate['mode'] = 'adjustment'
+    gamestate['mode'] = 'adjustments'
+    update_supply_ownership()
+    for faction in FACTIONS:
+      if count_supply_centers(faction) >= 18:
+        gamestate['mode'] == 'pregame'
+        send_message_channel("Game over! The winner is %s!!!" % faction)
+        init_gamestate()
+        return
     inform_adjustments()
   else:
     gamestate['mode'] = 'active'
     new_round()
 def end_adjustments_mode():
+  for faction in FACTIONS:
+    delta = get_unit_delta(faction)
+    if delta < 0:
+      if faction not in gamestate['adjustments_orders'] or len(gamestate['adjustments_orders'][faction]['groups']) != -delta:
+        send_message_channel("Cannot end because %s did not remove units!" % faction)
+        return
   resolve_adjustments_orders()
   gamestate['mode'] = 'active'
   new_round()
 
 def start_game():
   global gamestate
-  if gamestate['mode'] != 'pregame':
-    send_message_channel("Game is already on!")
+  empty_factions = filter(lambda x: len(gamestate['players'][x]) == 0, FACTIONS)
+  if len(empty_factions) > 0:
+    send_message_channel("These factions have no members: %s" % ", ".join(empty_factions))
   else:
-    empty_factions = filter(lambda x: len(gamestate['players'][x]) == 0, FACTIONS)
-    if len(empty_factions) > 0:
-      send_message_channel("These factions have no members: %s" % ", ".join(empty_factions))
-    else:
-      gamestate['mode'] = 'active'
-      send_message_channel("@here Game on!!!")
-      new_round()
+    gamestate['mode'] = 'active'
+    send_message_channel("@here Game on!!!")
+    new_round()
 
 def new_round():
   if 'season' not in gamestate or gamestate['season'] == 'fall':
@@ -431,11 +484,14 @@ def new_round():
   else:
     gamestate['season'] = 'fall'
   send_message_channel("%s %d:" % (capitalize(gamestate['season']), gamestate['year']))
+  gameboard_img = draw_gameboard(gamestate['gameboard'])
+  send_image_channel(gameboard_img)
   ## Every piece holds by default
   gamestate['orders'] = {}
   for territory in filter(lambda x: gamestate['gameboard'][x]['piece'] != 'none', gamestate['gameboard']):
     add_order({'action': 'hold', 'territory': territory})
   gamestate['retreat_orders'] = {}
+  gamestate['adjustments_orders'] = {}
   gamestate['dislodged_units'] = {}
   gamestate['invalid_retreats'] = set([])
 
@@ -483,9 +539,9 @@ def resolve_orders():
       not attacked_territory_order['is_convoyed']:
         ## Swap standoff
         if order['support'] > attacked_territory_order['support']:
-          dislodge_territory(attacked_territory, territory)
+          add_order({'territory': attacked_territory, 'action': 'hold', 'support': 0})
         elif order['support'] < attacked_territory_order['support']:
-          dislodge_territory(territory, attacked_territory)
+          add_order({'territory': territory, 'action': 'hold', 'support': 0})
         else:
           add_order({'territory': territory, 'action': 'hold', 'support': 1})
           add_order({'territory': attacked_territory, 'action': 'hold', 'support': 1})
@@ -525,7 +581,7 @@ def resolve_retreat_orders():
     add_piece(piece, to)
 
 def resolve_adjustments_orders():
-  for order in gamestate['adjustments_orders']:
+  for order in gamestate['adjustments_orders'].values():
     faction = order['faction']
     groups = order['groups']
     if order['action'] == 'add':
@@ -534,7 +590,7 @@ def resolve_adjustments_orders():
     elif order['action'] == 'remove':
       for _, territory in groups:
         remove_piece(territory)
-      
+
 def update_territories():
   attacking_orders = filter(lambda x: x['action'] == 'move/attack', gamestate['orders'].values())
   new_placements = []
@@ -546,6 +602,10 @@ def update_territories():
   for territory, piece in new_placements:
     add_piece(piece, territory)
 
+def update_supply_ownership():
+  for space in gamestate['gameboard'].values():
+    if space['piece'] != 'none' and 'supply' in space and space['supply'] != 'none':
+      space['supply'] = space['piece'].split()[0]
 
 #################### PERSISTENCE ####################
 
@@ -575,7 +635,6 @@ def init_gamestate():
     gamestate['gameboard'][space]['borders'] = frozenset(gamestate['gameboard'][space]['borders'])
   for pos in starting_positions:
     gamestate['gameboard'][pos]['piece'] = starting_positions[pos]
-
 
 if __name__ == '__main__':
   if len(sys.argv) == 2:

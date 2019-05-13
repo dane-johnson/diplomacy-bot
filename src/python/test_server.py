@@ -85,6 +85,11 @@ class ServerTest(unittest.TestCase):
       server.order_error({"action": "convoy", "territory": "abc", "from": "bcd", "to": "xyz"}, "england"),
       "Territory bcd is not valid"
     )
+    server.gamestate['mode'] = 'adjustments'
+    self.assertEqual(
+      server.order_error({"action": "add", "groups": [("army", "bcd")], "faction": "england"}, "england"),
+      "Territory bcd is not valid"
+    )
 
   def test_resolve_order_illegal_convoy(self):
     server.gamestate['gameboard'] = {"ion" : {"type": "water", "borders": set([]), "piece": "russia fleet"},

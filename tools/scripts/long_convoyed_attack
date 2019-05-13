@@ -14,9 +14,10 @@ en
 army pie to tus
 app_mention
 end
-display board
 end
 en
-remove fleet at gol, fleet at wes, fleet at mid, fleet at iri, fleet at lon
+remove fleet at gol, fleet at wes, fleet at mid, fleet at iri
+fr
+add army at mar
 app_mention
 end

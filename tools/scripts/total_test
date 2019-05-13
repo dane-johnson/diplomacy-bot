@@ -1,0 +1,18 @@
+en
+fleet lon to eng
+fr
+army mar to pie
+it
+fleet nap to tyn
+army rom to tus
+app_mention
+end
+end
+fr
+army pie to tus
+it
+army tus to pie
+army ven supports army tus to pie
+app_mention
+end
+display retreats
