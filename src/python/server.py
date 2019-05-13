@@ -170,7 +170,7 @@ def parse_order(order, user):
   if retreat_groups:
     return {'action': 'retreat', 'territory': retreat_groups.group(1), 'to': retreat_groups.group(2)}
 
-  add_regex = r"add"
+  add_regex = r"add\s(?:fleet|army)\sat\s[a-z]{3}"
   if re.match(add_regex, order):
     group_regex = r"(fleet|army)\s(?:at\s)([a-z]{3})"
     matches = re.findall(group_regex, order)
@@ -180,7 +180,7 @@ def parse_order(order, user):
       groups.append((unit, territory))
     return {'action': 'add', 'groups': groups, 'faction': faction}
   
-  remove_regex = r"remove"
+  remove_regex = r"remove\s(?:fleet|army)\sat\s[a-z]{3}"
   if re.match(remove_regex, order):
     group_regex = r"(fleet|army)\s(?:at\s)([a-z]{3})"
     matches = re.findall(group_regex, order)
@@ -503,6 +503,10 @@ def start_game():
   else:
     gamestate['mode'] = 'active'
     send_message_channel("@here Game on!!!")
+    if 'season' in gamestate:
+      del gamestate['season']
+    if 'year' in gamestate:
+      del gamestate['year']
     new_round()
 
 def new_round():
@@ -667,7 +671,8 @@ def init_gamestate():
       gamestate['gameboard'][space]['coastal_borders'] = frozenset(gamestate['gameboard'][space]['coastal_borders'])
   for pos in starting_positions:
     gamestate['gameboard'][pos]['piece'] = starting_positions[pos]
-
+  gamestate['mode'] = 'pregame'
+  
 if __name__ == '__main__':
   if len(sys.argv) == 2:
     filename = sys.argv[1]
