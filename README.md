@@ -8,6 +8,7 @@ First off, read the rules of diplomacy [here](https://web.archive.org/web/201904
 - __register [nation]__ - Join the nation of your choice, must be done before the game starts
 - __display factions__ - Show a list of which players are associated with each nation
 - __display board__ - Show the gameboard
+- __display retreats__ - Show a list of units that need retreat orders
 - __start__ - Begin the game
 - __end__ - Advance the game by ending the current round. Be sure all orders have been placed before advancing.
 - __amend [nation] ([piece] or remove) at [territory]__ - The game logic was hard to code and I probably made mistakes. Amend allows you to add and remove pieces to remedy mistakes. 
@@ -18,13 +19,18 @@ First off, read the rules of diplomacy [here](https://web.archive.org/web/201904
 - __fleet [territory] convoys army [territory] to [territory]__ - Order this fleet to convoy an army to a different space.
 - __[piece] [territory] disbands__ - Order this dislodged piece to be removed from the board.
 - __[piece] [territory] retreats to [territory]__ - Order this dislodged piece to retreat to a new territory.
+- __add [piece] at [territory] ( and [piece] at [territory]...)__ - Add pieces to territories in the adjustments phase.
+- __remove [piece] at [territory] ( and [piece] at [territory]...)__ - Add remove to territories in the adjustments phase.
 # Development Blog
 I made a number of mistakes on this project, particularly early on. The minimum viable product for this would have been me taking 
 photos of the board and sending it over text. Fully automating the game logic for a game I have never played was a mistake, and I realized that each page of the 20 page instruction manual translated to about 100 lines of code.
 
-Regardless, I'm looking ahead now, the new minimum product is simply the game logic, over Discord. I will not make another time estimation because I have been wrong so many times, so I will simply say _soon_. Ready yourselves for war.
+Regardless, I'm looking ahead now, the new minimum product is simply the game logic, over Discord. I will not make another time estimation because I have been wrong so many times, ~so I will simply say _soon_. Ready yourselves for war.~ It is live.
 
 I've put time into this, but it is untested and likely to have bugs. I will still be developing the game as it is being played, so expect changes, and refer to this document for updates.
+
+UPDATE: The game is live
+
 # Developer Info
 ## To Run:
 1. Set up a virtualenv environment `virtualenv ENV`
