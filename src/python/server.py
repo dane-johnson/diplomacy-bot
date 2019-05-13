@@ -77,8 +77,7 @@ def handle_in_channel_message(event):
       faction_string = print_factions()
       send_message_channel(faction_string)
     elif item == 'board':
-      gameboard_img = draw_gameboard(gamestate['gameboard'])
-      send_image_channel(gameboard_img)
+      show_board()
     elif item == 'retreats':
       retreats_string = print_retreats()
       send_message_channel(retreats_string)
@@ -310,6 +309,10 @@ def print_retreats():
         string += "\t%s dislodged from %s by unit at %s\n" % (unit, territory, attacking_territory)
   return string
 
+def show_board():
+  gameboard_img = draw_gameboard(gamestate['gameboard'])
+  send_image_channel(gameboard_img)
+
 def inform_adjustments():
   for faction in FACTIONS:
     for user in gamestate['players'][faction]:
@@ -433,6 +436,7 @@ def get_home_territories(faction):
 def end_active_mode():
   resolve_orders()
   update_territories()
+  show_board()
   create_retreat_orders()
   gamestate['mode'] = 'retreat'
   send_message_channel('Retreat!')
@@ -443,6 +447,7 @@ def end_retreat_mode():
   if gamestate['season'] == 'fall':
     gamestate['mode'] = 'adjustments'
     update_supply_ownership()
+    show_board()
     for faction in FACTIONS:
       if count_supply_centers(faction) >= 18:
         gamestate['mode'] == 'pregame'
@@ -485,8 +490,7 @@ def new_round():
   else:
     gamestate['season'] = 'fall'
   send_message_channel("%s %d:" % (capitalize(gamestate['season']), gamestate['year']))
-  gameboard_img = draw_gameboard(gamestate['gameboard'])
-  send_image_channel(gameboard_img)
+  show_board()
   ## Every piece holds by default
   gamestate['orders'] = {}
   for territory in filter(lambda x: gamestate['gameboard'][x]['piece'] != 'none', gamestate['gameboard']):
