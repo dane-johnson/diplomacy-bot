@@ -144,6 +144,8 @@ def print_board_issues():
       for coastal_border in gameboard[territory]['coastal_borders']:
         if gameboard[coastal_border]['type'] != 'coastal':
           print "%s coastal boarders %s but %s is type %s" % (territory, coastal_border, coastal_border, gameboard[coastal_border]['type'])
+        elif territory not in frozenset(gameboard[coastal_border]['coastal_borders']):
+          print "%s coastal boarders %s but %s does not coastal border %s" % (territory, coastal_border, coastal_border, territory)
   supply_centers = filter(lambda x: gameboard[x]['type'] != 'water' and gameboard[x]['supply'] != 'none', gameboard)
   if len(supply_centers) != 34:
     print 'There are not the correct amount of supply centers (%d/34)' % len(supply_centers)
