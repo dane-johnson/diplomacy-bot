@@ -227,8 +227,11 @@ def order_error(order, user):
    ## Don't allow fleets to move to land spaces
    if board[order['to']]['type'] == 'land' and piece.split()[1] == 'fleet':
      return "Cannot move fleet to land space"
-   if piece.split()[1] == 'fleet' and order['to'] not in board[order['territory']]['borders']:
-     return "Fleets can only move to adjacent spaces"
+   if piece.split()[1] == 'fleet':
+     if order['to'] not in board[order['territory']]['borders']:
+       return "Fleets can only move to adjacent spaces"
+     if board[order['territory']]['type'] == 'coastal' and board[order['to']]['type'] == 'coastal' and order['to'] not in board[order['territory']]['coastal_borders']:
+       return "Fleets can only move along coastlines"
    ## Don't allow movement to/from land or water spaces from/to non-adjacent spaces
    if board[order['territory']]['type'] == 'land' and order['to'] not in board[order['territory']]['borders'] or \
       board[order['to']]['type'] == 'land' and order['territory'] not in board[order['to']]['borders']:
@@ -654,6 +657,8 @@ def init_gamestate():
         gamestate['gameboard'][space]['controller'] = gamestate['gameboard'][space]['supply']
     gamestate['gameboard'][space]['piece'] = 'none'
     gamestate['gameboard'][space]['borders'] = frozenset(gamestate['gameboard'][space]['borders'])
+    if gamestate['gameboard'][space]['type'] == 'coastal':
+      gamestate['gameboard'][space]['coastal_borders'] = frozenset(gamestate['gameboard'][space]['coastal_borders'])
   for pos in starting_positions:
     gamestate['gameboard'][pos]['piece'] = starting_positions[pos]
 
