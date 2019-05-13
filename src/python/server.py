@@ -450,6 +450,7 @@ def end_retreat_mode():
         init_gamestate()
         return
     inform_adjustments()
+    send_message_channel('Adjust units!')
   else:
     gamestate['mode'] = 'active'
     new_round()
