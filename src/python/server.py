@@ -138,17 +138,17 @@ def parse_order(order, user):
   formatted_order = order.strip().lower()
   
   hold_regex = r"(?:army|fleet)\s([a-z]{3})\sholds"
-  hold_groups = re.match(hold_regex, order)
+  hold_groups = re.match(hold_regex, formatted_order)
   if hold_groups:
     return {'action': 'hold', 'territory': hold_groups.group(1)}
 
   move_attack_regex = r"(?:army|fleet)\s([a-z]{3})\sto\s([a-z]{3})"
-  move_attack_groups = re.match(move_attack_regex, order)
+  move_attack_groups = re.match(move_attack_regex, formatted_order)
   if move_attack_groups:
     return {'action': 'move/attack', 'territory': move_attack_groups.group(1), 'to': move_attack_groups.group(2)}
 
   support_regex = r"(?:army|fleet)\s([a-z]{3})\ssupports\s(?:army|fleet)\s([a-z]{3})(?:\sto\s)?([a-z]{3})?"
-  support_groups = re.match(support_regex, order)
+  support_groups = re.match(support_regex, formatted_order)
   if support_groups:
     order = {'action': 'support', 'territory': support_groups.group(1), 'supporting': support_groups.group(2)}
     if support_groups.group(3):
@@ -156,24 +156,24 @@ def parse_order(order, user):
     return order
 
   convoy_regex = r"fleet\s([a-z]{3})\sconvoys\sarmy\s([a-z]{3})\sto\s([a-z]{3})"
-  convoy_groups = re.match(convoy_regex, order)
+  convoy_groups = re.match(convoy_regex, formatted_order)
   if convoy_groups:
     return {'action': 'convoy', 'territory': convoy_groups.group(1), 'from': convoy_groups.group(2), 'to': convoy_groups.group(3)}
 
   disband_regex = r"(?:army|fleet)\s([a-z]{3})\sdisbands"
-  disband_groups = re.match(disband_regex, order)
+  disband_groups = re.match(disband_regex, formatted_order)
   if disband_groups:
     return {'action': 'disband', 'territory': disband_groups.group(1)}
 
   retreat_regex = r"(?:fleet|army)\s([a-z]{3})\sretreats\sto\s([a-z]{3})"
-  retreat_groups = re.match(retreat_regex, order)
+  retreat_groups = re.match(retreat_regex, formatted_order)
   if retreat_groups:
     return {'action': 'retreat', 'territory': retreat_groups.group(1), 'to': retreat_groups.group(2)}
 
   add_regex = r"add\s(?:fleet|army)\sat\s[a-z]{3}"
-  if re.match(add_regex, order):
+  if re.match(add_regex, formatted_order):
     group_regex = r"(fleet|army)\s(?:at\s)([a-z]{3})"
-    matches = re.findall(group_regex, order)
+    matches = re.findall(group_regex, formatted_order)
     groups = []
     for match in matches:
       unit, territory = match
@@ -181,9 +181,9 @@ def parse_order(order, user):
     return {'action': 'add', 'groups': groups, 'faction': faction}
   
   remove_regex = r"remove\s(?:fleet|army)\sat\s[a-z]{3}"
-  if re.match(remove_regex, order):
+  if re.match(remove_regex, formatted_norder):
     group_regex = r"(fleet|army)\s(?:at\s)([a-z]{3})"
-    matches = re.findall(group_regex, order)
+    matches = re.findall(group_regex, formatted_order)
     groups = []
     for match in matches:
       unit, territory = match
