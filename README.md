@@ -9,6 +9,7 @@ First off, read the rules of diplomacy [here](https://web.archive.org/web/201904
 - __display factions__ - Show a list of which players are associated with each nation
 - __display board__ - Show the gameboard
 - __display retreats__ - Show a list of units that need retreat orders
+- __display orders__ - Cause the bot to DM you with a list of your orders
 - __start__ - Begin the game
 - __end__ - Advance the game by ending the current round. Be sure all orders have been placed before advancing.
 - __amend [nation] ([piece] or remove) at [territory]__ - The game logic was hard to code and I probably made mistakes. Amend allows you to add and remove pieces to remedy mistakes. 
