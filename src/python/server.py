@@ -97,6 +97,9 @@ def handle_in_channel_message(event):
     elif item == 'retreats':
       retreats_string = print_retreats()
       send_message_channel(retreats_string)
+    elif item == 'orders':
+      user = event['user']
+      inform_orders(user)
     else:
       send_message_channel("I don't know what %s is." % item)
 
@@ -346,6 +349,12 @@ def inform_adjustments():
         send_message_im("You may add %d units" % delta, user)
       elif delta < 0:
         send_message_im("You must remove %s units" % -delta, user)
+
+def inform_orders(user):
+  faction = get_faction(user)
+  for territory in gamestate['gameboard']:
+    if get_piece(territory).split()[0] == faction:
+      send_message_im(str(get_order(territory)), user)
 
 #################### GETTERS/SETTERS/MUTATORS ####################
 
