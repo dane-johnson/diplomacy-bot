@@ -346,9 +346,9 @@ def inform_adjustments():
     for user in gamestate['players'][faction]:
       delta = get_unit_delta(faction)
       if delta > 0:
-        send_message_im("You may add %d units" % delta, user)
+        send_message_channel("<@%s> you may add %d units" % (user, delta))
       elif delta < 0:
-        send_message_im("You must remove %s units" % -delta, user)
+        send_message_channel("<@%s> you must remove %s units" % (user, -delta))
 
 def inform_orders(user):
   faction = get_faction(user)
@@ -488,8 +488,8 @@ def end_retreat_mode():
         send_message_channel("Game over! The winner is %s!!!" % faction)
         init_gamestate()
         return
-    inform_adjustments()
     send_message_channel('Adjust units!')
+    inform_adjustments()
   else:
     gamestate['mode'] = 'active'
     new_round()
