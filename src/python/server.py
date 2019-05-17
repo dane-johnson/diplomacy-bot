@@ -49,26 +49,30 @@ def handle_event(event):
   if event["type"] == 'app_mention':
     handle_in_channel_message(event)
   elif event["type"] == 'message':
-    order = parse_order(event['text'], event['user'])
-    if order:
-      if gamestate['mode'] == get_order_mode(order):
-        error = order_error(order, event['user'])
-        if not error:
-          send_message_im("Order Recieved!", event["channel"])
-          if gamestate['mode'] == 'active':
-            add_order(order)
-          elif gamestate['mode'] == 'retreat':
-            add_retreat_order(order)
-          elif gamestate['mode'] == 'adjustments':
-            add_adjustments_order(order)
-          if filename:
-            save_gamestate()
-        else:
-          send_message_im(error, event["channel"])
-      else:
-        send_message_im("You can't send that order now!", event['channel'])
+    text = event['text']
+    if is_display_request(text):
+      private_display(text, event['user'], event['channel'])
     else:
-      send_message_im("I don't know what you mean!", event["channel"])
+      order = parse_order(event['text'], event['user'])
+      if order:
+        if gamestate['mode'] == get_order_mode(order):
+          error = order_error(order, event['user'])
+          if not error:
+            send_message_im("Order Recieved!", event["channel"])
+            if gamestate['mode'] == 'active':
+              add_order(order)
+            elif gamestate['mode'] == 'retreat':
+              add_retreat_order(order)
+            elif gamestate['mode'] == 'adjustments':
+              add_adjustments_order(order)
+            if filename:
+              save_gamestate()
+          else:
+            send_message_im(error, event["channel"])
+        else:
+          send_message_im("You can't send that order now!", event['channel'])
+      else:
+        send_message_im("I don't know what you mean!", event["channel"])
 
 def handle_in_channel_message(event):
   register_regex = r"register ([-a-z]+)"
@@ -99,7 +103,7 @@ def handle_in_channel_message(event):
       send_message_channel(retreats_string)
     elif item == 'orders':
       user = event['user']
-      inform_orders(user)
+      inform_orders(user, user) ## TODO this only works on Slack
     else:
       send_message_channel("I don't know what %s is." % item)
 
@@ -135,6 +139,24 @@ def handle_in_channel_message(event):
 
   if filename:
     save_gamestate()
+
+def private_display(text, user, im_channel):
+  display_regex = r"display (.*)"
+  display_groups = re.match(display_regex, text)
+  if display_groups:
+    item = display_groups.group(1)
+    if item == 'factions':
+      faction_string = print_factions()
+      send_message_im(faction_string, im_channel)
+    elif item == 'retreats':
+      retreats_string = print_retreats
+      send_message_im(retreats_string, im_channel)
+    elif item == 'orders':
+      inform_orders(user, im_channel)
+    elif item == 'board':
+      send_message_im("I can't send images to DM channels yet, ask me in the group channel", im_channel)
+    else:
+      send_message_im("I don't know what %s is." % item, im_channel)
 
 def parse_order(order, user):
   faction = get_faction(user)
@@ -184,7 +206,7 @@ def parse_order(order, user):
     return {'action': 'add', 'groups': groups, 'faction': faction}
   
   remove_regex = r"remove\s(?:fleet|army)\sat\s[a-z]{3}"
-  if re.match(remove_regex, formatted_norder):
+  if re.match(remove_regex, formatted_order):
     group_regex = r"(fleet|army)\s(?:at\s)([a-z]{3})"
     matches = re.findall(group_regex, formatted_order)
     groups = []
@@ -350,11 +372,11 @@ def inform_adjustments():
       elif delta < 0:
         send_message_channel("<@%s> you must remove %s units" % (user, -delta))
 
-def inform_orders(user):
+def inform_orders(user, channel):
   faction = get_faction(user)
   for territory in gamestate['gameboard']:
     if get_piece(territory).split()[0] == faction:
-      send_message_im(str(get_order(territory)), user)
+      send_message_im(str(get_order(territory)), channel)
 
 #################### GETTERS/SETTERS/MUTATORS ####################
 
@@ -412,6 +434,10 @@ def dislodge_territory(territory, attacker_origin):
   gamestate['dislodged_units'][territory] = (get_piece(territory), attacker_origin)
   gamestate['gameboard'][territory]['piece'] = 'none'
   del gamestate['orders'][territory]
+
+def is_display_request(text):
+  display_regex = r"display"
+  return re.match(display_regex, text)
 
 def is_illegal_move(order):
   board = gamestate['gameboard']
