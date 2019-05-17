@@ -22,6 +22,7 @@ First off, read the rules of diplomacy [here](https://web.archive.org/web/201904
 - __[piece] [territory] retreats to [territory]__ - Order this dislodged piece to retreat to a new territory.
 - __add [piece] at [territory] ( and [piece] at [territory]...)__ - Add pieces to territories in the adjustments phase.
 - __remove [piece] at [territory] ( and [piece] at [territory]...)__ - Add remove to territories in the adjustments phase.
+- __display__ - You can do display requests in the direct message channel now
 # Development Blog
 I made a number of mistakes on this project, particularly early on. The minimum viable product for this would have been me taking 
 photos of the board and sending it over text. Fully automating the game logic for a game I have never played was a mistake, and I realized that each page of the 20 page instruction manual translated to about 100 lines of code.
