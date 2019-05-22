@@ -63,6 +63,7 @@ class CLIInterface(Interface):
 class SlackInterface(Interface):
   def __init__(self, handle_event):
     self.app = Flask(__name__)
+    self.invalid_ts = []
     
     @self.app.route("/event", methods=['POST'])
     def slack_hook():
@@ -74,8 +75,17 @@ class SlackInterface(Interface):
       if event['type'] == 'message' and 'subtype' in event and event['subtype'] == 'bot_message':
         ## Avoid infinite loop, ignore bot messages
         return "OK"
+      ## Sometimes slack gets the same message twice, lets ignore those
+      if event['ts'] in frozenset(self.invalid_ts):
+        return "OK"
+      else:
+        self.add_invalid_ts(event['ts'])
       handle_event(event)
       return "OK"
+  def add_invalid_ts(self, ts):
+    if len(self.invalid_ts) > 10:
+      self.invalid_ts.pop(0)
+    self.invalid_ts.append(ts)
 
   def run(self):
     self.app.run('0.0.0.0', port=8080)
