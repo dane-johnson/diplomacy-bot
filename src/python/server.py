@@ -315,10 +315,10 @@ def order_error(order, user):
     faction = order['faction']
     for unit, territory in order['groups']:
       # Don't allow removal of an empty space
-      if gameboard[territory]['piece'] == 'none':
+      if get_piece(territory) == 'none':
         return "You cannot remove %s as it is empty" % territory
       # Don't allow removal from another faction
-      if gameboard[territory]['piece'].split()[0] != faction:
+      if get_piece(territory).split()[0] != faction:
         return "You cannot remove %s as it is controlled by another faction" % territory
     # Don't allow any more or less removals than the delta
     if len(order['groups']) != -get_unit_delta(order['faction']):
