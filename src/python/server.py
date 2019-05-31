@@ -149,7 +149,7 @@ def private_display(text, user, im_channel):
       faction_string = print_factions()
       send_message_im(faction_string, im_channel)
     elif item == 'retreats':
-      retreats_string = print_retreats
+      retreats_string = print_retreats()
       send_message_im(retreats_string, im_channel)
     elif item == 'orders':
       inform_orders(user, im_channel)
@@ -523,8 +523,11 @@ def end_active_mode():
   show_board()
   create_retreat_orders()
   gamestate['mode'] = 'retreat'
-  send_message_channel('Retreat!')
-  send_message_channel(print_retreats())
+  if len(gamestate['retreat_orders']) == 0:
+    end_retreat_mode()
+  else:
+    send_message_channel('Retreat!')
+    send_message_channel(print_retreats())
 
 def end_retreat_mode():
   resolve_retreat_orders()
