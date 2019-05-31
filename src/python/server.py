@@ -214,7 +214,26 @@ def parse_order(order, user):
       unit, territory = match
       groups.append((unit, territory))
     return {'action': 'remove', 'groups': groups, 'faction': faction}
-  
+
+def unparse_order(order):
+  action = order['action']
+  territory = order['territory']
+  piece = get_piece(territory)
+  if action == 'move/attack':
+    return '%s attacking %s from %s' % (piece, order['to'], territory)
+  if action == 'hold':
+    return '%s at %s holding' % (piece, territory)
+  if action == 'convoy':
+    return '%s at %s convoying %s at %s to %s' % (piece, territory, get_piece(order['from']), order['from'], order['to'])
+  if action == 'support':
+    if 'to' in order:
+      return '%s at %s supporting %s at %s to %s' % (piece, territory, get_piece(order['supporting']), order['supporting'], order['to'])
+    else:
+      return '%s at %s supporting %s at %s' % (piece, territory, get_piece(order['supporting']), order['supporting'])
+  if action == 'disband':
+    return '%s at %s disbanding' % (piece, territory)
+  if action == 'retreat':
+    return '%s at %s retreating to %s' % (piece, territory, order['to'])
 
 def order_error(order, user):
   board = gamestate['gameboard']
@@ -359,6 +378,9 @@ def print_retreats():
         string += "\t%s dislodged from %s by unit at %s\n" % (unit, territory, attacking_territory)
   return string
 
+def print_orders():
+  return '\n'.join(map(unparse_order, gamestate['orders'].values()))
+
 def show_board():
   gameboard_img = draw_gameboard(gamestate['gameboard'])
   send_image_channel(gameboard_img)
@@ -376,7 +398,7 @@ def inform_orders(user, channel):
   faction = get_faction(user)
   for territory in gamestate['gameboard']:
     if get_piece(territory).split()[0] == faction:
-      send_message_im(str(get_order(territory)), channel)
+      send_message_im(unparse_order(get_order(territory)), channel)
 
 #################### GETTERS/SETTERS/MUTATORS ####################
 
@@ -496,6 +518,8 @@ def get_home_territories(faction):
 def end_active_mode():
   resolve_orders()
   update_territories()
+  send_message_channel('Orders!')
+  send_message_channel(print_orders())
   show_board()
   create_retreat_orders()
   gamestate['mode'] = 'retreat'
