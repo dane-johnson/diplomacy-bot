@@ -152,7 +152,10 @@ def private_display(text, user, im_channel):
       retreats_string = print_retreats()
       send_message_im(retreats_string, im_channel)
     elif item == 'orders':
-      inform_orders(user, im_channel)
+      if gamestate['mode'] == 'active':
+        inform_orders(user, im_channel)
+      elif gamestate['mode'] == 'adjustments':
+        inform_adjustment_orders(user, im_channel)
     elif item == 'board':
       send_message_im("I can't send images to DM channels yet, ask me in the group channel", im_channel)
     else:
@@ -217,8 +220,9 @@ def parse_order(order, user):
 
 def unparse_order(order):
   action = order['action']
-  territory = order['territory']
-  piece = get_piece(territory)
+  if 'territory' in order:
+    territory = order['territory']
+    piece = get_piece(territory)
   if action == 'move/attack':
     return '%s attacking %s from %s' % (piece, order['to'], territory)
   if action == 'hold':
@@ -234,6 +238,14 @@ def unparse_order(order):
     return '%s at %s disbanding' % (piece, territory)
   if action == 'retreat':
     return '%s at %s retreating to %s' % (piece, territory, order['to'])
+  if action == 'add':
+    faction = order['faction']
+    groups = order['groups']
+    return '%s adds %s' % (faction, ', '.join(map(lambda group: '%s at %s' % group, groups)))
+  if action == 'remove':
+    faction = order['faction']
+    groups = order['groups']
+    return '%s removes %s' % (faction, ', '.join(map(lambda group: '%s at %s' % group, groups)))
 
 def order_error(order, user):
   board = gamestate['gameboard']
@@ -399,6 +411,13 @@ def inform_orders(user, channel):
   for territory in gamestate['gameboard']:
     if get_piece(territory).split()[0] == faction:
       send_message_im(unparse_order(get_order(territory)), channel)
+
+def inform_adjustment_orders(user, channel):
+  faction = get_faction(user)
+  if faction not in gamestate['adjustments_orders']:
+    send_message_im("You have not made any adjustments", channel)
+  else:
+    send_message_im(unparse_order(gamestate['adjustments_orders'][faction]), channel)
 
 #################### GETTERS/SETTERS/MUTATORS ####################
 

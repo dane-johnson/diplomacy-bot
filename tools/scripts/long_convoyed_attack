@@ -12,12 +12,13 @@ display retreats
 end
 en
 army pie to tus
+army mar to gas
 app_mention
 end
-end
 en
-remove fleet at gol, fleet at wes, fleet at mid, fleet at iri
+remove fleet at gol, fleet at wes, fleet at mid, fleet at iri, army at gas
 fr
 add army at mar
+display orders
 app_mention
 end

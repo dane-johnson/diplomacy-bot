@@ -67,6 +67,22 @@ class ServerTest(unittest.TestCase):
     self.assertEqual(
       server.parse_order("remove army at abc, fleet at bcd", "en"),
       {"action": "remove", "groups": [("army", "abc"), ("fleet", "bcd")], "faction": "england"})
+  def test_unparse_order(self):
+    server.add_to_faction('england', 'en')
+    server.gamestate['gameboard'] = {"abc": {"type": "land", "supply": "england", "piece": "england army"},
+                                     "bcd": {"type": "land", "supply": "none", "piece": "none"}}
+    self.assertEqual(
+      server.unparse_order({'action': 'move/attack', 'territory': 'abc', 'to': 'bcd'}),
+      "england army attacking bcd from abc"
+    )
+    self.assertEqual(
+      server.unparse_order({'action': 'add', 'faction': 'england', 'groups': [('army', 'bcd'), ('fleet', 'xyz')]}),
+      "england adds army at bcd, fleet at xyz",
+    )
+    self.assertEqual(
+      server.unparse_order({'action': 'remove', 'faction': 'england', 'groups': [('army', 'bcd'), ('fleet', 'xyz')]}),
+      "england removes army at bcd, fleet at xyz",
+    )
   def test_add_order(self):
     hold_order = {"action": "hold", "territory": "abc"}
     attack_order = {"action": "move/attack", "territory": "abc", "to": "bcd"}
