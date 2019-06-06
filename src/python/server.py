@@ -293,6 +293,7 @@ def order_error(order, user):
       board[order['to']]['type'] == 'land' and order['territory'] not in board[order['to']]['borders']:
      return "Moving to this non-adjacent space is illegal"
   if order['action'] == 'support':
+    territory = order['territory']
     if 'to' in order:
       supported_territory = order['to']
     else:
@@ -303,7 +304,7 @@ def order_error(order, user):
       return "A fleet cannot support a land territory"
     if board[supported_territory]['type'] == 'water' and piece.split()[1] == 'army':
       return "An army cannot support a water territory"
-    if board[supported_territory]['type'] == 'coastal' and board[territory]['type'] == 'coastal' and piece.split()[1] == 'fleet' and supported_territory not in board[territory]['coastal_borders']:
+    if get_territory(supported_territory)['type'] == 'coastal' and get_territory(territory)['type'] == 'coastal' and piece.split()[1] == 'fleet' and supported_territory not in get_territory(territory)['coastal_borders']:
       return "Fleets can only support along the coastlines"
   if order['action'] == 'retreat':
     # Don't allow retreating to occupied spaces
