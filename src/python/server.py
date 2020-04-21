@@ -618,7 +618,7 @@ def resolve_orders():
   for territory in orders:
     order = orders[territory]
     if order['action'] == 'move/attack' and order['to'] in orders:
-      if orders[order['to']]['action'] == 'support' and orders[order['to']]['to'] != territory:
+      if orders[order['to']]['action'] == 'support' and ('to' not in orders[order['to']] or orders[order['to']]['to'] != territory):
         add_order({'territory': order['to'], 'action': 'hold'})
       if orders[order['to']]['action'] == 'convoy':
         add_order({'territory': order['to'], 'action': 'hold'})
