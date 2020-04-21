@@ -415,10 +415,12 @@ def inform_orders(user, channel):
 
 def inform_adjustment_orders(user, channel):
   faction = get_faction(user)
+  delta = get_unit_delta(faction)
   if faction not in gamestate['adjustments_orders']:
     send_message_im("You have not made any adjustments", channel)
   else:
     send_message_im(unparse_order(gamestate['adjustments_orders'][faction]), channel)
+  send_message_im("Delta: %d", delta)
 
 #################### GETTERS/SETTERS/MUTATORS ####################
 
