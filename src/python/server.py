@@ -420,7 +420,7 @@ def inform_adjustment_orders(user, channel):
     send_message_im("You have not made any adjustments", channel)
   else:
     send_message_im(unparse_order(gamestate['adjustments_orders'][faction]), channel)
-  send_message_im("Delta: %d", delta)
+  send_message_im("Delta: %d" % delta, channel)
 
 #################### GETTERS/SETTERS/MUTATORS ####################
 
