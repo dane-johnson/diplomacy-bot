@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/dane-johnson/diplomacy-bot#readme",
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "discord.js": "^11.4.2",
     "dotenv": "^7.0.0"
   }
